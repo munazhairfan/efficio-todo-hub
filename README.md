@@ -1,102 +1,91 @@
-# Todo In-Memory Console App
+# Todo App - Full Stack Application with Authentication
 
-A simple, command-line based todo application written in Python that stores tasks in memory. This application provides all basic CRUD operations for managing tasks with a clean, intuitive interface.
+A full-stack todo application with authentication, featuring a Next.js frontend and FastAPI backend. This application provides all basic CRUD operations for managing tasks with secure authentication and authorization.
 
 ## Features
 
-- **Add Tasks**: Create new tasks with titles and descriptions
-- **View Tasks**: Display all tasks with clear status indicators
-- **Update Tasks**: Modify existing task details
-- **Delete Tasks**: Remove tasks from the list
-- **Mark Complete/Incomplete**: Toggle task completion status
-- **In-Memory Storage**: All data stored in memory (no external dependencies)
-- **Clean Interface**: Simple menu-driven console interface
+- **Authentication System**: Secure user signup, signin, and profile management
+- **Task Management**: Create, read, update, and delete tasks
+- **Protected Routes**: Authentication required for task operations
+- **Responsive UI**: Modern interface built with Next.js and Tailwind CSS
+- **Secure API**: FastAPI backend with JWT authentication
+- **Database Integration**: PostgreSQL database with SQLModel ORM
 
 ## Requirements
 
-- Python 3.x
+- Node.js 18+ (for frontend)
+- Python 3.11+ (for backend)
+- PostgreSQL database
+- Vercel account (for frontend deployment)
 
-## Installation
+## Frontend Setup
 
-1. Clone or download this repository
-2. Navigate to the project directory
-3. No additional installation required - the application uses only Python standard library
+1. Navigate to the frontend directory: `cd frontend`
+2. Install dependencies: `npm install`
+3. Create `.env.local` file with:
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   ```
+4. Run development server: `npm run dev`
 
-## Usage
+## Backend Setup
 
-To run the application, execute:
+1. Navigate to the backend directory: `cd backend`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Create `.env` file with:
+   ```env
+   SECRET_KEY=your-secret-key-here
+   DATABASE_URL=postgresql+asyncpg://username:password@localhost/dbname
+   FRONTEND_URL=http://localhost:3000
+   ```
+4. Run the server: `uvicorn main:app --reload`
 
-```bash
-python -m src.main
-```
+## Production Deployment
 
-Or if you're in the src directory:
+### Frontend Deployment to Vercel
 
-```bash
-python main.py
-```
+1. Connect your Vercel account to your GitHub repository
+2. Set environment variables in Vercel dashboard:
+   - `NEXT_PUBLIC_API_URL`: Your production backend URL
+3. Vercel will automatically detect the Next.js configuration and deploy
 
-### Main Menu Options
+### Backend Deployment
 
-1. **Add Task**: Create a new task with title and description
-2. **View Tasks**: Display all tasks with their status
-3. **Update Task**: Modify an existing task's title or description
-4. **Delete Task**: Remove a task from the list
-5. **Toggle Complete/Incomplete**: Change the completion status of a task
-6. **Exit**: Close the application
+The backend can be deployed to various platforms:
 
-### Status Indicators
+#### Option 1: Deploy to Railway/Render/Hetzner
+1. Set environment variables:
+   - `SECRET_KEY`: Your JWT secret key
+   - `DATABASE_URL`: PostgreSQL database URL
+   - `FRONTEND_URL`: Your production frontend URL
+2. Deploy using platform-specific commands
 
-- `[○]` - Incomplete task
-- `[✓]` - Complete task
+#### Option 2: Deploy backend as Vercel Functions (Advanced)
+1. Create `api/index.py` with FastAPI mounted as ASGI app
+2. Use Vercel's Python runtime
 
-## Project Structure
+## Authentication Flow
 
-```
-todo-app/
-├── src/                    # Source code
-│   ├── main.py            # Application entry point
-│   ├── models.py          # Task data model and storage
-│   ├── todo.py            # Task management logic
-│   └── cli.py             # Command-line interface
-├── tests/                  # Unit tests
-│   ├── test_models.py     # Tests for data models
-│   ├── test_todo.py       # Tests for business logic
-│   └── test_cli.py        # Tests for CLI functions
-├── docs/                   # Documentation
-│   └── usage.md           # Detailed usage guide
-├── requirements.txt       # Python dependencies
-├── .gitignore            # Git ignore file
-└── README.md             # This file
-```
+1. **Signup**: User registers with email/password, receives JWT token
+2. **Signin**: User authenticates with credentials, receives JWT token
+3. **Protected Routes**: JWT token required in Authorization header
+4. **Profile Access**: Token validated to retrieve user profile
+5. **Task Operations**: Token validated to ensure user owns the task
 
-## Testing
+## Environment Configuration
 
-To run the comprehensive test suite:
+### Frontend Environment Variables
+- `NEXT_PUBLIC_API_URL`: Backend API URL (required)
 
-```bash
-python -m pytest tests/ -v
-```
+### Backend Environment Variables
+- `SECRET_KEY`: JWT secret key for token signing
+- `DATABASE_URL`: PostgreSQL database connection string
+- `FRONTEND_URL`: Allowed origin for CORS (defaults to http://localhost:3000)
 
-All 56 tests should pass, covering models, business logic, and CLI functionality.
+## Security Considerations
 
-## Architecture
-
-The application follows clean code principles with clear separation of concerns:
-
-- **models.py**: Defines the Task dataclass and TaskList in-memory storage
-- **todo.py**: Contains the business logic for task operations
-- **cli.py**: Handles user input and console output
-- **main.py**: Orchestrates the application flow
-
-## Success Criteria Met
-
-- ✅ Users can add new tasks in under 30 seconds from starting the application
-- ✅ System displays task lists with up to 100 tasks in under 2 seconds
-- ✅ 95% of user operations (add, update, delete, mark) complete successfully
-- ✅ All task operations provide clear feedback within 1 second of execution
-- ✅ Users can successfully manage their tasks with 100% accuracy in status tracking
-
-## License
-
-This project is open source and available under the MIT License.
+- Use strong, randomly generated `SECRET_KEY` in production
+- Use HTTPS in production for all API communications
+- Validate and sanitize all user inputs
+- Use parameterized queries to prevent SQL injection
+- Implement rate limiting for authentication endpoints
