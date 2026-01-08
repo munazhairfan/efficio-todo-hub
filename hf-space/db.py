@@ -14,7 +14,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./todo_app_hf.db")
 try:
     # Create async engine with connection pooling settings
     # Different settings for PostgreSQL vs SQLite
-    if "postgresql" in DATABASE_URL.lower():
+    if "postgresql" in DATABASE_URL.lower() or "postgres" in DATABASE_URL.lower():
         # PostgreSQL settings
         engine = create_async_engine(
             DATABASE_URL,
