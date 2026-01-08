@@ -34,8 +34,9 @@ export * from './separator';
 export * from './skeleton';
 export * from './table';
 export * from './toast';
-export * from './toaster';
-export * from './sonner';
+// Export toaster and sonner separately to avoid naming conflicts
+export { Toaster as SonnerToaster } from './sonner'; // Sonner-based toaster
+export { Toaster as ReactToaster } from './toaster'; // Radix UI-based toaster
 export * from './drawer';
 export * from './sheet';
 export * from './command';

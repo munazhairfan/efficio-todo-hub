@@ -51,7 +51,6 @@ todo_app.db
 
 # Backup directories
 frontend_backup/
-ui/
 
 # IDE
 .vscode/
