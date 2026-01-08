@@ -1,0 +1,52 @@
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+import os
+from typing import AsyncGenerator
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Get database URL from environment variable as per backend/CLAUDE.md
+# Use absolute path to ensure consistent database location
+db_path = Path(__file__).parent / "todo_app.db"
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_path}")
+
+# Create async engine with connection pooling settings
+# Different settings for PostgreSQL vs SQLite
+if "postgresql" in DATABASE_URL.lower():
+    # PostgreSQL settings
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,  # Set to True for debugging, False in production
+        pool_size=5,
+        max_overflow=10,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
+else:
+    # SQLite settings
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,  # Set to True for debugging, False in production
+        # SQLite doesn't support connection pooling the same way, so use minimal settings
+        pool_size=5,
+        max_overflow=0,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        # SQLite-specific settings
+        connect_args={"check_same_thread": False}  # Required for SQLite with async
+    )
+
+# Create async session maker
+AsyncSessionLocal = sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI dependency for getting async database sessions per backend/CLAUDE.md"""
+    async with AsyncSessionLocal() as session:
+        yield session
