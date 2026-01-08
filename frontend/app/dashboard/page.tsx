@@ -134,7 +134,7 @@ export default function DashboardPage() {
   const totalCount = todos.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-mint-julep to-confetti p-4">
+    <div className="min-h-screen bg-mint-julep p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="flex justify-between items-center py-6 mb-8">
