@@ -9,7 +9,7 @@ class Settings:
     """Application settings"""
 
     def __init__(self):
-        self.database_url: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./todo_app.db")
+        self.database_url: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./todo_app_hf.db")
         self.auth_secret: str = os.getenv("BETTER_AUTH_SECRET", "your-default-secret-key")
         self.debug: bool = os.getenv("DEBUG", "False").lower() == "true"
         self.app_name: str = "Todo API with Authentication"
