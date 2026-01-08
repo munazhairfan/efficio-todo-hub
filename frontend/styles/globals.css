@@ -81,6 +81,21 @@
   --color-confetti: #d9e661;
 }
 
+.dark {
+  --color-mojo: #ff7d71;
+  --color-buttermilk: #4a4a2a;
+  --color-paris-daisy: #e0c43a;
+  --color-dobger-blue: #5bb8f7;
+  --color-code-gray: #bfbfbf;
+  --color-honey-flower: #a573b6;
+  --color-meadow: #c5e08d;
+  --color-salmon: #f0c770;
+  --color-mint-julep: #c2c88c;
+  --color-merlot: #c56d7c;
+  --color-dello: #8bc25a;
+  --color-confetti: #a8b94d;
+}
+
 * {
   border-color: hsl(var(--border));
 }

@@ -16,7 +16,6 @@ from services.todo_service import (
 )
 
 router = APIRouter(
-    prefix="/api/todos",
     tags=["todos"]
 )
 

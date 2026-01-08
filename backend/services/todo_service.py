@@ -6,6 +6,7 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uuid
+from fastapi import HTTPException, status
 from models.todo import Todo
 from models.user import User
 from schemas import TodoCreate, TodoUpdate, TodoResponse
@@ -80,7 +81,6 @@ async def get_todo_service(todo_id: uuid.UUID, user_id: uuid.UUID, db: AsyncSess
     todo = result.scalar_one_or_none()
 
     if not todo:
-        from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Todo not found or doesn't belong to user"
@@ -109,7 +109,6 @@ async def update_todo_service(todo_id: uuid.UUID, todo_update: TodoUpdate, user_
     todo = result.scalar_one_or_none()
 
     if not todo:
-        from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Todo not found or doesn't belong to user"
@@ -150,7 +149,6 @@ async def delete_todo_service(todo_id: uuid.UUID, user_id: uuid.UUID, db: AsyncS
     todo = result.scalar_one_or_none()
 
     if not todo:
-        from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Todo not found or doesn't belong to user"

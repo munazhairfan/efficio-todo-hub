@@ -38,18 +38,6 @@ export function Navbar() {
           EFFICIO
         </Link>
 
-        <div className="hidden md:flex items-center gap-8 font-bold text-merlot">
-          <Link href="#features" className="hover:text-mojo transition-colors">
-            Features
-          </Link>
-          <Link href="#pricing" className="hover:text-mojo transition-colors">
-            Pricing
-          </Link>
-          <Link href="#app" className="hover:text-mojo transition-colors">
-            The App
-          </Link>
-        </div>
-
         <div className="flex items-center gap-4">
           {user ? (
             // User is logged in

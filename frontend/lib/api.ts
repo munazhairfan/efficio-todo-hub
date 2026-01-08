@@ -16,7 +16,11 @@ class ApiClient {
     options: RequestInit = {},
     includeAuth = true
   ): Promise<T> {
-    const url = `${this.baseUrl}/api${endpoint}`;
+    // Remove trailing slash from baseUrl if it exists to prevent double slashes
+    const cleanBaseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    // Ensure endpoint starts with a slash for consistent URL construction
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${cleanBaseUrl}/api${normalizedEndpoint}`;
 
     const headers = new Headers(options.headers);
     headers.set('Content-Type', 'application/json');

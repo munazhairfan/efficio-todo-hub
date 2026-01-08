@@ -10,7 +10,7 @@ from models.user import User
 from core.auth.jwt_handler import create_access_token
 from core.security.password import hash_password, verify_password
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 
 async def create_user_service(email: str, password: str, name: str, db: AsyncSession) -> Dict[str, Any]:
@@ -18,8 +18,11 @@ async def create_user_service(email: str, password: str, name: str, db: AsyncSes
     Service function to create a new user
     # UI Component: SignupForm -> Service: create_user_service
     """
+    # Normalize email: trim whitespace and convert to lowercase for comparison
+    normalized_email = email.strip().lower()
+
     # Check if user already exists
-    result = await db.execute(select(User).where(User.email == email))
+    result = await db.execute(select(User).where(func.lower(func.trim(User.email)) == normalized_email))
     existing_user = result.scalar_one_or_none()
 
     if existing_user:
@@ -74,8 +77,11 @@ async def authenticate_user_service(email: str, password: str, db: AsyncSession)
     Service function to authenticate user
     # UI Component: SigninForm -> Service: authenticate_user_service
     """
+    # Normalize email: trim whitespace and convert to lowercase for comparison
+    normalized_email = email.strip().lower()
+
     # Find user by email
-    result = await db.execute(select(User).where(User.email == email))
+    result = await db.execute(select(User).where(func.lower(func.trim(User.email)) == normalized_email))
     user = result.scalar_one_or_none()
 
     if not user:

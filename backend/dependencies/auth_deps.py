@@ -14,11 +14,22 @@ async def get_current_user(token_data: dict = Depends(verify_access_token)) -> U
     # UI Component: ProtectedRoute -> Dependency: get_current_user
     """
     # token_data is the decoded JWT payload
-    user_id = token_data.get("sub")  # Extract user ID from the payload
-    if not user_id:
+    user_id_str = token_data.get("sub")  # Extract user ID from the payload
+    if not user_id_str:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Convert string ID to UUID for database query
+    import uuid
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user ID format",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

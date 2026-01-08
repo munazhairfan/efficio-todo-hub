@@ -43,15 +43,11 @@ export default function AuthPage() {
       console.log('Signin successful, result:', result);
       console.log('Navigating to dashboard...');
 
-      // Directly store the token in localStorage to ensure it's available when dashboard loads
-      if (typeof window !== 'undefined' && result.token) {
-        localStorage.setItem('authToken', result.token);
-      }
+      // Wait a brief moment to ensure token is properly stored in both localStorage and cookies
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Force immediate redirect to ensure navigation happens
-      if (typeof window !== 'undefined') {
-        window.location.href = '/dashboard';
-      }
+      // Use Next.js router for navigation to maintain React state
+      router.push('/dashboard');
 
       console.log('Navigation completed');
     } catch (error) {
@@ -89,15 +85,11 @@ export default function AuthPage() {
       console.log('Signup successful, result:', result);
       console.log('Navigating to dashboard...');
 
-      // Directly store the token in localStorage to ensure it's available when dashboard loads
-      if (typeof window !== 'undefined' && result.token) {
-        localStorage.setItem('authToken', result.token);
-      }
+      // Wait a brief moment to ensure token is properly stored in both localStorage and cookies
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Force immediate redirect to ensure navigation happens
-      if (typeof window !== 'undefined') {
-        window.location.href = '/dashboard';
-      }
+      // Use Next.js router for navigation to maintain React state
+      router.push('/dashboard');
 
       console.log('Navigation completed');
     } catch (error) {

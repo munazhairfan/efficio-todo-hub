@@ -20,6 +20,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Sync auth token between localStorage and cookies for server-side access
+  useEffect(() => {
+    // Only run this effect on the client side
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    // Function to sync localStorage token to cookies
+    const syncTokenToCookie = (token: string | null) => {
+      // Set the token in a cookie that expires in 24 hours
+      if (token) {
+        document.cookie = `authToken=${token}; path=/; max-age=${24 * 60 * 60}; samesite=strict`;
+      } else {
+        // Clear the cookie if no token
+        document.cookie = 'authToken=; path=/; max-age=0; samesite=strict';
+      }
+    };
+
+    // On initial load, sync the existing token if any
+    const existingToken = localStorage.getItem('authToken');
+    if (existingToken) {
+      syncTokenToCookie(existingToken);
+    }
+
+    // Listen for storage events to sync changes across tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'authToken') {
+        syncTokenToCookie(e.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   useEffect(() => {
     // Check if user is authenticated on initial load
     const checkAuthStatus = async () => {
@@ -46,6 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await auth.signin(email, password);
       console.log('AuthProvider signin response:', response);
+
+      // Sync token to cookies after successful signin
+      if (response.token && typeof window !== 'undefined' && typeof document !== 'undefined') {
+        document.cookie = `authToken=${response.token}; path=/; max-age=${24 * 60 * 60}; samesite=strict`;
+      }
+
       setUser(response.user);
       console.log('User state updated in AuthProvider');
       return response;
@@ -60,6 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await auth.signup(email, password, name);
       console.log('AuthProvider signup response:', response);
+
+      // Sync token to cookies after successful signup
+      if (response.token && typeof window !== 'undefined' && typeof document !== 'undefined') {
+        document.cookie = `authToken=${response.token}; path=/; max-age=${24 * 60 * 60}; samesite=strict`;
+      }
+
       setUser(response.user);
       console.log('User state updated in AuthProvider');
       return response;
@@ -71,6 +120,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signout = () => {
     auth.signout();
+    // Clear cookie on signout
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      document.cookie = 'authToken=; path=/; max-age=0; samesite=strict';
+    }
     setUser(null);
   };
 

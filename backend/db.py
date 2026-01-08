@@ -16,9 +16,35 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_path}")
 # Create async engine with connection pooling settings
 # Different settings for PostgreSQL vs SQLite
 if "postgresql" in DATABASE_URL.lower():
+    # Extract the original URL and handle PostgreSQL-specific parameters that asyncpg doesn't support
+    from urllib.parse import urlparse, parse_qs
+
+    parsed = urlparse(DATABASE_URL)
+    query_params = parse_qs(parsed.query)
+
+    # Remove unsupported parameters for asyncpg
+    unsupported_params = ['sslmode', 'channel_binding']
+    for param in unsupported_params:
+        if param in query_params:
+            del query_params[param]
+
+    # Reconstruct the query string
+    new_query_parts = []
+    for key, values in query_params.items():
+        for value in values:
+            new_query_parts.append(f"{key}={value}")
+    new_query = "&".join(new_query_parts)
+
+    # Reconstruct the URL without unsupported parameters
+    clean_database_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+    if new_query:
+        clean_database_url += f"?{new_query}"
+    if parsed.fragment:
+        clean_database_url += f"#{parsed.fragment}"
+
     # PostgreSQL settings
     engine = create_async_engine(
-        DATABASE_URL,
+        clean_database_url,
         echo=True,  # Set to True for debugging, False in production
         pool_size=5,
         max_overflow=10,
