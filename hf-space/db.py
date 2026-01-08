@@ -2,16 +2,14 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 import os
 from typing import AsyncGenerator
-from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
-# Get database URL from environment variable as per backend/CLAUDE.md
-# Use absolute path to ensure consistent database location
-db_path = Path(__file__).parent / "todo_app.db"
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_path}")
+# Get database URL from environment variable
+# Default to SQLite for local development, but allow override for production
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./todo_app_hf.db")
 
 # Create async engine with connection pooling settings
 # Different settings for PostgreSQL vs SQLite
