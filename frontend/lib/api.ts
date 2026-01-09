@@ -21,8 +21,8 @@ class ApiClient {
   ): Promise<T> {
     // Use proxy route to avoid mixed content issues with Hugging Face Spaces
     // Construct URL to use our proxy instead of direct backend access
-    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-    const url = `/api/proxy/${normalizedEndpoint}`;
+    // Append the endpoint as a query parameter to work around dynamic route issues
+    const url = `/api/proxy?endpoint=${encodeURIComponent(endpoint.startsWith('/') ? endpoint.substring(1) : endpoint)}`;
 
     console.log('Making API request through proxy:', url);
 
