@@ -19,9 +19,32 @@ app = FastAPI(
 
 # Add CORS middleware
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")  # Default to localhost for development
+# Allow multiple origins to support different ports during development
+ALLOWED_ORIGINS = [FRONTEND_URL]
+
+# Add common development ports for flexibility
+common_ports = [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009]
+for port in common_ports:
+    ALLOWED_ORIGINS.append(f"http://localhost:{port}")
+
+# Also add 127.0.0.1 versions for consistency
+for port in common_ports:
+    ALLOWED_ORIGINS.append(f"http://127.0.0.1:{port}")
+
+# Add Vercel deployment domains for production
+VERCEL_URL = os.getenv("VERCEL_URL", "")
+if VERCEL_URL:
+    ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
+
+# Add common Vercel domain patterns
+ALLOWED_ORIGINS.extend([
+    "https://efficio-todo-hub.vercel.app",
+    "https://www.efficio-todo-hub.vercel.app"
+])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
