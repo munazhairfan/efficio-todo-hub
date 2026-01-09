@@ -1,135 +1,73 @@
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
 
-export async function GET(request: NextRequest, { params }: { params: { path: string } }) {
-  // Get the path segments after /api/proxy/
-  const { path } = params;
+// Generic handler that works for all HTTP methods
+async function handleRequest(request: NextRequest, path: string, method: string) {
   const searchParams = request.nextUrl.search;
   const backendUrl = `http://munazha-efficio-todo-hub.hf.space/api/${path}${searchParams}`;
 
   try {
+    let body = null;
+    if (method !== 'GET' && method !== 'HEAD') {
+      body = await request.json().catch(() => null);
+    }
+
     const authToken = request.headers.get('authorization');
+
     const response = await fetch(backendUrl, {
-      method: 'GET',
+      method,
       headers: {
         'Content-Type': 'application/json',
         ...(authToken ? { 'Authorization': authToken } : {}),
       },
+      ...(body && { body: JSON.stringify(body) }),
     });
 
-    const data = await response.json();
+    // Clone the response to read the body
+    const responseBody = await response.text();
 
-    return new Response(JSON.stringify(data), {
+    return new Response(responseBody, {
       status: response.status,
       headers: {
         'Content-Type': 'application/json',
+        // Forward any other important headers
+        ...Object.fromEntries(response.headers.entries()),
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Proxy error' }), {
+    console.error('Proxy error:', error);
+    return new Response(JSON.stringify({ error: 'Proxy error', details: (error as Error).message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
+}
+
+export async function GET(request: NextRequest, { params }: { params: { path: string } }) {
+  const { path } = params;
+  return handleRequest(request, path, 'GET');
 }
 
 export async function POST(request: NextRequest, { params }: { params: { path: string } }) {
   const { path } = params;
-  const backendUrl = `http://munazha-efficio-todo-hub.hf.space/api/${path}`;
-
-  try {
-    const body = await request.json();
-    const authToken = request.headers.get('authorization');
-
-    const response = await fetch(backendUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken ? { 'Authorization': authToken } : {}),
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
-
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: 'Proxy error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  return handleRequest(request, path, 'POST');
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { path: string } }) {
   const { path } = params;
-  const backendUrl = `http://munazha-efficio-todo-hub.hf.space/api/${path}`;
+  return handleRequest(request, path, 'PUT');
+}
 
-  try {
-    const body = await request.json();
-    const authToken = request.headers.get('authorization');
-
-    const response = await fetch(backendUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken ? { 'Authorization': authToken } : {}),
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
-
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: 'Proxy error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+export async function PATCH(request: NextRequest, { params }: { params: { path: string } }) {
+  const { path } = params;
+  return handleRequest(request, path, 'PATCH');
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: { path: string } }) {
   const { path } = params;
-  const backendUrl = `http://munazha-efficio-todo-hub.hf.space/api/${path}`;
+  return handleRequest(request, path, 'DELETE');
+}
 
-  try {
-    const authToken = request.headers.get('authorization');
-
-    const response = await fetch(backendUrl, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authToken ? { 'Authorization': authToken } : {}),
-      },
-    });
-
-    if (response.status === 204) {
-      return new Response(null, { status: 204 });
-    }
-
-    const data = await response.json();
-
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: 'Proxy error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+export async function HEAD(request: NextRequest, { params }: { params: { path: string } }) {
+  const { path } = params;
+  return handleRequest(request, path, 'HEAD');
 }
