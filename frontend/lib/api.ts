@@ -12,6 +12,7 @@ class ApiClient {
       throw new Error('NEXT_PUBLIC_API_URL is not set. Please configure the environment variable.');
     }
     this.baseUrl = API_BASE_URL;
+    console.log('API Client initialized with base URL:', this.baseUrl);
   }
 
   private async request<T>(
