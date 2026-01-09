@@ -26,6 +26,8 @@ class ApiClient {
 
     console.log('Making API request through proxy:', url);
 
+    // Make sure we have the proper method
+    const method = options.method || 'GET';
     const headers = new Headers(options.headers);
     headers.set('Content-Type', 'application/json');
 
@@ -40,6 +42,7 @@ class ApiClient {
     try {
       const response = await fetch(url, {
         ...options,
+        method, // Ensure method is properly passed
         headers,
       });
 
