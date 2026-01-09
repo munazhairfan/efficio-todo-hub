@@ -11,7 +11,22 @@ class ApiClient {
     if (!API_BASE_URL) {
       throw new Error('NEXT_PUBLIC_API_URL is not set. Please configure the environment variable.');
     }
-    this.baseUrl = API_BASE_URL;
+
+    // Ensure HTTPS protocol for production environments to avoid mixed content issues
+    let resolvedUrl = API_BASE_URL;
+    if (typeof window !== 'undefined') {
+      // Check if we're on the client side and the app is running on Vercel
+      const currentOrigin = window.location.origin;
+      if (currentOrigin.includes('vercel.app')) {
+        // Force HTTPS for the API URL when running on Vercel
+        if (resolvedUrl.startsWith('http://')) {
+          resolvedUrl = resolvedUrl.replace('http://', 'https://');
+          console.warn('Converted API URL from HTTP to HTTPS to prevent mixed content issues on Vercel:', resolvedUrl);
+        }
+      }
+    }
+
+    this.baseUrl = resolvedUrl;
     console.log('API Client initialized with base URL:', this.baseUrl);
   }
 
