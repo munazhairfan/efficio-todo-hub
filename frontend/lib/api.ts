@@ -27,6 +27,8 @@ class ApiClient {
     const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     const url = `${cleanBaseUrl}/api${normalizedEndpoint}`;
 
+    console.log('Making API request to URL:', url);
+
     const headers = new Headers(options.headers);
     headers.set('Content-Type', 'application/json');
 
@@ -41,6 +43,17 @@ class ApiClient {
     const response = await fetch(url, {
       ...options,
       headers,
+    })
+    .then(response => {
+      console.log('API response received:', response.url, response.status);
+      if (response.redirected) {
+        console.warn('API request was redirected from:', url, 'to:', response.url);
+      }
+      return response;
+    })
+    .catch(error => {
+      console.error('API request failed for URL:', url, 'Error:', error);
+      throw error;
     });
 
     if (!response.ok) {
