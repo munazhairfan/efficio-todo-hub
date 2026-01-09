@@ -31,6 +31,17 @@ for port in common_ports:
 for port in common_ports:
     ALLOWED_ORIGINS.append(f"http://127.0.0.1:{port}")
 
+# Add Vercel deployment domains for production
+VERCEL_URL = os.getenv("VERCEL_URL", "")
+if VERCEL_URL:
+    ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
+
+# Add common Vercel domain patterns
+ALLOWED_ORIGINS.extend([
+    "https://efficio-todo-hub.vercel.app",
+    "https://www.efficio-todo-hub.vercel.app"
+])
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
