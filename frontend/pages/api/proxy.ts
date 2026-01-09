@@ -48,8 +48,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fetchOptions: RequestInit = {
       method,
       headers,
-      // Disable compression to avoid potential issues
-      compress: false,
       // Add timeout and other fetch options to handle network issues
       signal: AbortSignal.timeout(15000), // 15 second timeout
     };
