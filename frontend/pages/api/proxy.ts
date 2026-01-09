@@ -21,6 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const fullBackendUrl = `${backendUrl}${normalizedEndpoint}`;
 
   try {
+    console.log(`Attempting to proxy ${req.method} request to:`, fullBackendUrl);
+
     // Determine the HTTP method from the incoming request
     const method = req.method || 'GET';
 
@@ -46,6 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const fetchOptions: RequestInit = {
       method,
       headers,
+      // Add timeout and other fetch options to handle network issues
+      signal: AbortSignal.timeout(10000), // 10 second timeout
     };
 
     // Add body for methods that can have a body
@@ -53,10 +57,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       fetchOptions.body = JSON.stringify(req.body);
     }
 
-    console.log(`Proxying ${method} request to:`, fullBackendUrl);
-
     // Make the request to the backend
     const response = await fetch(fullBackendUrl, fetchOptions);
+
+    console.log(`Backend responded with status: ${response.status}`);
 
     // Get the response data
     const responseData = await response.text();
@@ -80,15 +84,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.send(responseData);
 
   } catch (error: any) {
-    console.error('Proxy error:', error);
-    // Log more detailed error information
-    if (error.cause) {
-      console.error('Error cause:', error.cause);
-    }
+    console.error('Proxy error details:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      cause: error.cause,
+      url: fullBackendUrl,
+      method: req.method
+    });
+
+    // Return more specific error information
     res.status(500).json({
       error: 'Proxy error',
       details: error.message || error.toString(),
-      ...(error.stack && { stack: error.stack })
+      backendUrl: fullBackendUrl,
+      method: req.method,
+      timestamp: new Date().toISOString(),
+      ...(error.cause && { cause: error.cause })
     });
   }
 }
