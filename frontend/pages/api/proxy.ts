@@ -44,12 +44,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // Prepare the fetch options
+    // Prepare the fetch options with additional debugging
     const fetchOptions: RequestInit = {
       method,
       headers,
+      // Disable compression to avoid potential issues
+      compress: false,
       // Add timeout and other fetch options to handle network issues
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(15000), // 15 second timeout
     };
 
     // Add body for methods that can have a body
@@ -60,10 +62,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Make the request to the backend
     const response = await fetch(fullBackendUrl, fetchOptions);
 
-    console.log(`Backend responded with status: ${response.status}`);
+    console.log(`Backend responded with status: ${response.status} for URL: ${fullBackendUrl}`);
 
     // Get the response data
     const responseData = await response.text();
+
+    // Log response details for debugging
+    console.log(`Response status: ${response.status}, Content-Type: ${response.headers.get('content-type')}`);
 
     // Forward the response status and headers
     res.status(response.status);
@@ -75,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Forward other important headers
     response.headers.forEach((value, key) => {
       if (!key.toLowerCase().startsWith('access-control-') &&
-          !key.toLowerCase().match(/^(set-cookie|authorization)$/)) {
+          !key.toLowerCase().match(/^(set-cookie|authorization|access-control-allow-origin)$/)) {
         res.setHeader(key, value);
       }
     });
@@ -90,17 +95,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       stack: error.stack,
       cause: error.cause,
       url: fullBackendUrl,
-      method: req.method
+      method: req.method,
+      timestamp: new Date().toISOString()
     });
 
-    // Return more specific error information
+    // More specific error response with debugging information
     res.status(500).json({
-      error: 'Proxy error',
+      error: 'Proxy connection failed',
       details: error.message || error.toString(),
       backendUrl: fullBackendUrl,
       method: req.method,
+      endpoint: endpoint,
+      normalizedEndpoint: `${backendUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`,
       timestamp: new Date().toISOString(),
-      ...(error.cause && { cause: error.cause })
+      ...(error.cause && { cause: error.cause }),
+      errorType: error.constructor.name
     });
   }
 }
