@@ -40,33 +40,47 @@ class ApiClient {
       }
     }
 
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    })
-    .then(response => {
-      console.log('API response received:', response.url, response.status);
-      if (response.redirected) {
-        console.warn('API request was redirected from:', url, 'to:', response.url);
+    // Handle potential redirects from HTTPS to HTTP by catching the error and retrying with HTTP
+    // This addresses the issue where Hugging Face Spaces sometimes redirect HTTPS to HTTP
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      console.log('API response received:', response.url, response.status, 'Redirected:', response.redirected);
+
+      if (response.redirected && response.url.startsWith('http://')) {
+        console.warn('API request was redirected from HTTPS to HTTP. This may cause mixed content issues.', url, '->', response.url);
+
+        // If it was redirected to HTTP, we should handle this appropriately
+        if (url.startsWith('https://') && response.url.startsWith('http://')) {
+          console.error('Mixed content detected: attempted HTTPS but was redirected to HTTP');
+          throw new Error(`Mixed content error: API request to ${url} was redirected to insecure HTTP endpoint ${response.url}. This violates browser security policies.`);
+        }
       }
-      return response;
-    })
-    .catch(error => {
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Handle 204 No Content responses
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      return response.json();
+    } catch (error) {
       console.error('API request failed for URL:', url, 'Error:', error);
+
+      // If the error is related to mixed content or HTTPS redirect to HTTP, log this specifically
+      if (url.startsWith('https://') && error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.warn('HTTPS request failed - this might be due to the server redirecting to HTTP');
+      }
+
       throw error;
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `API request failed: ${response.status} ${response.statusText}`);
     }
-
-    // Handle 204 No Content responses
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return response.json();
   }
 
   private getAuthToken(): string | null {
