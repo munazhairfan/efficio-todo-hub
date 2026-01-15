@@ -1,0 +1,13 @@
+runtime:
+  python: "3.11"
+  requirements: "requirements.txt"
+
+build:
+  # Build commands
+  pre_build_commands:
+    - "pip install --upgrade pip"
+
+serve:
+  # Serve configuration
+  command: "python server.py"
+  port: $PORT

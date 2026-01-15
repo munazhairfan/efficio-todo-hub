@@ -1,0 +1,89 @@
+# API Contract: Chat Integration
+
+## Overview
+This document defines the API contracts for the chat integration feature.
+
+## Endpoint
+### POST /api/{user_id}/chat
+Send a message to the chatbot and receive a response.
+
+#### Path Parameters
+- **user_id** (string, required): The ID of the user sending the message
+
+#### Request Body
+```json
+{
+  "message": "string",
+  "conversation_id": "string (optional)"
+}
+```
+
+#### Response Codes
+- **200**: Success - Message processed and response returned
+- **400**: Bad Request - Invalid input parameters
+- **401**: Unauthorized - Invalid or missing authentication
+- **404**: Not Found - User ID does not exist
+- **500**: Internal Server Error - Unexpected server error
+
+#### Successful Response (200 OK)
+```json
+{
+  "conversation_id": "string",
+  "response": "string",
+  "timestamp": "ISO 8601 datetime string",
+  "status": "success"
+}
+```
+
+#### Error Response (400, 401, 404, 500)
+```json
+{
+  "error": {
+    "code": "string",
+    "message": "string",
+    "details": "object (optional)"
+  },
+  "status": "error"
+}
+```
+
+## Example Requests and Responses
+
+### Example Request
+```
+POST /api/user123/chat
+Content-Type: application/json
+Authorization: Bearer <token>
+
+{
+  "message": "Hello, how can you help me?",
+  "conversation_id": "conv456"
+}
+```
+
+### Example Response
+```json
+{
+  "conversation_id": "conv456",
+  "response": "Hello! I can help you manage your tasks. What would you like to do?",
+  "timestamp": "2026-01-13T10:30:00Z",
+  "status": "success"
+}
+```
+
+## Validation Rules
+- Message must be between 1 and 2000 characters
+- User ID must exist and be authenticated
+- Conversation ID, if provided, must be valid for the user
+- Rate limiting: Maximum 10 requests per minute per user
+- All timestamps must be in ISO 8601 format
+
+## Headers
+- **Authorization**: Bearer token for authentication (required)
+- **Content-Type**: application/json (required for POST requests)
+- **Accept**: application/json (default)
+
+## Rate Limiting
+- Per user: 10 requests per minute
+- Per IP: 100 requests per minute
+- Exceeding limits results in 429 (Too Many Requests) response

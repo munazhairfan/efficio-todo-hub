@@ -1,0 +1,60 @@
+openapi: 3.0.0
+info:
+  title: Chat Endpoint Integration
+  version: 1.0.0
+  description: API for integrating AI agent with chat endpoint
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Process user message and return AI agent response
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user sending the message
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: The message from the user to the AI agent
+              required:
+                - message
+      responses:
+        '200':
+          description: Successful response from AI agent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The AI agent's response to the user
+                  action_taken:
+                    type: boolean
+                    description: Whether an action was taken by the AI agent
+                required:
+                  - response
+                  - action_taken
+        '400':
+          description: Bad request - invalid input
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

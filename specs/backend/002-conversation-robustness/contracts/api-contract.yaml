@@ -1,0 +1,83 @@
+# API Contract: Conversation Robustness
+
+## Overview
+This document defines the API contracts for the conversation robustness features.
+
+## Endpoints
+
+### POST /api/conversation/clarify
+Submit a request that requires clarification or submit clarifying information.
+
+#### Request
+```json
+{
+  "sessionId": "string",
+  "input": "string",
+  "context": "object"
+}
+```
+
+#### Response (200 OK)
+```json
+{
+  "responseType": "clarification|success|error",
+  "message": "string",
+  "clarifyingQuestions": ["string"],
+  "suggestedActions": ["string"],
+  "conversationId": "string"
+}
+```
+
+### GET /api/conversation/state/{sessionId}
+Retrieve the current state of a conversation.
+
+#### Response (200 OK)
+```json
+{
+  "sessionId": "string",
+  "state": "active|awaiting_clarification|completed",
+  "currentIntent": "string",
+  "pendingClarifications": ["string"],
+  "contextData": {}
+}
+```
+
+### POST /api/error/handle
+Report an error and get user-friendly response.
+
+#### Request
+```json
+{
+  "errorType": "user_input|system_failure|network_issue|validation_error",
+  "originalRequest": {},
+  "technicalDetails": "string"
+}
+```
+
+#### Response (200 OK)
+```json
+{
+  "userMessage": "string",
+  "suggestedActions": ["string"],
+  "canRetry": "boolean"
+}
+```
+
+## Error Responses
+All endpoints return standardized error responses:
+
+#### 4xx/5xx Error Response
+```json
+{
+  "error": {
+    "type": "string",
+    "message": "user-friendly message",
+    "code": "string"
+  }
+}
+```
+
+## Validation Rules
+- All user-facing messages must be in plain language without technical jargon
+- Error responses must include at least one suggested action when possible
+- Session IDs must be validated before processing requests

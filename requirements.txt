@@ -1,0 +1,2 @@
+# Python requirements for Todo In-Memory Console App
+# No external dependencies required - using only Python standard library

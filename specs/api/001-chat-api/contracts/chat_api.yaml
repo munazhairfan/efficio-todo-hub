@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Chat API + Conversation Handling
+  description: API for managing conversations and exchanging messages with AI assistant
+  version: 1.0.0
+servers:
+  - url: https://api.example.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message and receive AI response
+      description: Creates a new conversation or continues an existing one, stores the user message, and returns an AI response
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: ID of the user initiating the chat
+          schema:
+            type: integer
+            example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversation_id:
+                  type: integer
+                  nullable: true
+                  description: Optional ID of existing conversation to continue. If omitted, a new conversation will be created.
+                  example: 456
+                message:
+                  type: string
+                  description: The user's message to send to the AI assistant
+                  example: "Hello, how can you help me?"
+              required:
+                - message
+      responses:
+        '200':
+          description: Successfully processed message and returned AI response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversation_id:
+                    type: integer
+                    description: ID of the conversation (new or existing)
+                    example: 456
+                  response:
+                    type: string
+                    description: AI-generated response to the user's message
+                    example: "Hello! I can help you with various tasks. What would you like assistance with today?"
+                  tool_calls:
+                    type: array
+                    description: List of tools called during AI processing (empty for now)
+                    items:
+                      type: object
+                    example: []
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "Message parameter is required"
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "User not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
+                    example: "An unexpected error occurred"
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      properties:
+        conversation_id:
+          type: integer
+          nullable: true
+          description: Optional ID of existing conversation to continue
+          example: 456
+        message:
+          type: string
+          description: The user's message to send to the AI assistant
+          example: "Hello, how can you help me?"
+      required:
+        - message
+
+    ChatResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: integer
+          description: ID of the conversation (new or existing)
+          example: 456
+        response:
+          type: string
+          description: AI-generated response to the user's message
+          example: "Hello! I can help you with various tasks. What would you like assistance with today?"
+        tool_calls:
+          type: array
+          description: List of tools called during AI processing (empty for now)
+          items:
+            type: object
+          example: []

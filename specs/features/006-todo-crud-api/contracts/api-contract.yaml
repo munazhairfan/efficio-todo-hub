@@ -1,0 +1,216 @@
+openapi: 3.0.0
+info:
+  title: Todo CRUD API
+  description: REST API for Todo management with user authentication and isolation
+  version: 1.0.0
+paths:
+  /api/todos:
+    post:
+      summary: Create a new todo
+      description: Creates a new todo item associated with the authenticated user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoCreate'
+      responses:
+        '201':
+          description: Todo created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+        '400':
+          description: Invalid request format
+        '401':
+          description: Unauthorized - invalid or missing JWT
+        '422':
+          description: Validation error
+        '500':
+          description: Internal server error
+    get:
+      summary: Get user's todos
+      description: Returns a list of todos belonging to the authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of todos retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  todos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TodoResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT
+        '500':
+          description: Internal server error
+
+  /api/todos/{id}:
+    get:
+      summary: Get a specific todo
+      description: Returns details of a specific todo if it belongs to the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Todo retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT
+        '404':
+          description: Todo not found or doesn't belong to user
+        '500':
+          description: Internal server error
+    put:
+      summary: Update a specific todo
+      description: Updates a specific todo if it belongs to the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TodoUpdate'
+      responses:
+        '200':
+          description: Todo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodoResponse'
+        '400':
+          description: Invalid request format
+        '401':
+          description: Unauthorized - invalid or missing JWT
+        '404':
+          description: Todo not found or doesn't belong to user
+        '422':
+          description: Validation error
+        '500':
+          description: Internal server error
+    delete:
+      summary: Delete a specific todo
+      description: Deletes a specific todo if it belongs to the authenticated user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Todo deleted successfully
+        '401':
+          description: Unauthorized - invalid or missing JWT
+        '404':
+          description: Todo not found or doesn't belong to user
+        '500':
+          description: Internal server error
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TodoCreate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 1000
+          example: "Need to buy milk, bread, and eggs"
+        completed:
+          type: boolean
+          default: false
+          example: false
+
+    TodoUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 1000
+          example: "Need to buy milk, bread, and eggs"
+        completed:
+          type: boolean
+          example: true
+
+    TodoResponse:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+        - created_at
+        - updated_at
+        - user_id
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        title:
+          type: string
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 1000
+          example: "Need to buy milk, bread, and eggs"
+        completed:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00Z"
+        user_id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174001"

@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #fef4b8; /* Buttermilk */
+    --foreground: #55236e; /* Honey Flower */
+    --card: #fef4b8;
+    --card-foreground: #55236e;
+    --popover: #fef4b8;
+    --popover-foreground: #55236e;
+    --primary: #bf3d34; /* Mojo */
+    --primary-foreground: #ffffff;
+    --secondary: #55236e; /* Honey Flower */
+    --secondary-foreground: #ffffff;
+    --muted: #eaefb4; /* Mint Julep */
+    --muted-foreground: #55236e;
+    --accent: #7b1c2f; /* Merlot */
+    --accent-foreground: #ffffff;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #55236e;
+    --input: #55236e;
+    --ring: #bf3d34;
+    --radius: 1rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+  }
+
+  .dark {
+    --background: #0a0a0a;
+    --foreground: #ffffff;
+    --card: #0a0a0a;
+    --card-foreground: #ffffff;
+    --popover: #0a0a0a;
+    --popover-foreground: #ffffff;
+    --primary: #ffffff;
+    --primary-foreground: #0a0a0a;
+    --secondary: #2d2d2d;
+    --secondary-foreground: #ffffff;
+    --muted: #2d2d2d;
+    --muted-foreground: #9ca3af;
+    --accent: #2d2d2d;
+    --accent-foreground: #ffffff;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #f87171;
+    --border: #2d2d2d;
+    --input: #2d2d2d;
+    --ring: #3b82f6;
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(0.269 0 0);
+    --sidebar-ring: oklch(0.439 0 0);
+  }
+}
+
+/* Add custom color definitions for reference UI */
+:root {
+  --color-mojo: #bf3d34;
+  --color-buttermilk: #fef4b8;
+  --color-paris-daisy: #fff467;
+  --color-dobger-blue: #12a6e1;
+  --color-code-gray: #2D2D2D;
+  --color-honey-flower: #55236e;
+  --color-meadow: #9bc53d;
+  --color-salmon: #ffe8a8;
+  --color-mint-julep: #eaefb4;
+  --color-merlot: #7b1c2f;
+  --color-dello: #4b7119;
+  --color-confetti: #d9e661;
+}
+
+.dark {
+  --color-mojo: #ff7d71;
+  --color-buttermilk: #4a4a2a;
+  --color-paris-daisy: #e0c43a;
+  --color-dobger-blue: #5bb8f7;
+  --color-code-gray: #bfbfbf;
+  --color-honey-flower: #a573b6;
+  --color-meadow: #c5e08d;
+  --color-salmon: #f0c770;
+  --color-mint-julep: #c2c88c;
+  --color-merlot: #c56d7c;
+  --color-dello: #8bc25a;
+  --color-confetti: #a8b94d;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
