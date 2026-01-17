@@ -18,7 +18,6 @@ from ..models.conversation import ConversationCreate, ConversationResponse
 from ..models.message import MessageCreate, MessageResponse
 from ..services.conversation_service import ConversationService
 from ..services.message_service import MessageService
-from ..agents.task_management_agent import process_user_message, process_user_message_with_context
 from ..services.openrouter_client import call_openrouter
 
 router = APIRouter(prefix="/api/{user_id}", tags=["chat"])
@@ -197,16 +196,89 @@ def chat_endpoint(
     })
 
     # Prepare MCP tools schema for potential use by the AI
-    # For now, we'll pass an empty tools list, but this could be expanded to include actual tool schemas
-    mcp_tools_schemas = []
+    mcp_tools_schemas = [
+        {
+            "type": "function",
+            "function": {
+                "name": "add_task",
+                "description": "Create a new task for the user",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "The user's ID"},
+                        "title": {"type": "string", "description": "The title of the task to create"},
+                        "description": {"type": "string", "description": "Detailed description of the task (optional)"}
+                    },
+                    "required": ["user_id", "title"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "list_tasks",
+                "description": "Retrieve tasks for the user",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "The user's ID"},
+                        "status": {"type": "string", "description": "Filter by status ('all', 'pending', 'completed'), defaults to 'all'"}
+                    },
+                    "required": ["user_id"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "complete_task",
+                "description": "Mark a task as completed",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "The user's ID"},
+                        "task_id": {"type": "integer", "description": "The ID of the task to complete"}
+                    },
+                    "required": ["user_id", "task_id"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "delete_task",
+                "description": "Remove a task",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "The user's ID"},
+                        "task_id": {"type": "integer", "description": "The ID of the task to delete"}
+                    },
+                    "required": ["user_id", "task_id"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "update_task",
+                "description": "Update task title or description",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "user_id": {"type": "string", "description": "The user's ID"},
+                        "task_id": {"type": "integer", "description": "The ID of the task to update"},
+                        "title": {"type": "string", "description": "New title for the task (optional)"},
+                        "description": {"type": "string", "description": "New description for the task (optional)"}
+                    },
+                    "required": ["user_id", "task_id"]
+                }
+            }
+        }
+    ]
 
     # Call OpenRouter to get AI response
     ai_response_content = call_openrouter(messages, tools=mcp_tools_schemas)
-
-    # Fallback to agent if OpenRouter fails
-    if not ai_response_content or ai_response_content == "I'm having trouble responding right now. Please try again.":
-        agent_result = process_user_message_with_context(str(user_id), chat_request.message, conversation_history)
-        ai_response_content = agent_result.get("response", "I processed your request.")
 
     # Create the AI's response message
     ai_message_data = MessageCreate(

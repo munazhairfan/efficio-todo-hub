@@ -70,10 +70,81 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
             # Parse the response
             data = response.json()
 
-            # Extract the AI response content
+            # Check if the response contains tool calls
             if "choices" in data and len(data["choices"]) > 0:
-                content = data["choices"][0]["message"]["content"]
-                return content.strip() if content else ""
+                choice = data["choices"][0]
+
+                # Check if the AI wants to call a tool
+                if "tool_calls" in choice["message"]:
+                    # Import the tools here to avoid circular imports
+                    from ..mcp_tools import add_task, list_tasks, complete_task, delete_task, update_task
+
+                    # Process each tool call
+                    tool_call_results = []
+                    for tool_call in choice["message"]["tool_calls"]:
+                        function_name = tool_call["function"]["name"]
+                        import json
+                        function_args = json.loads(tool_call["function"]["arguments"])  # Safely parse the arguments
+
+                        try:
+                            # Execute the appropriate tool function
+                            if function_name == "add_task":
+                                result = add_task(**function_args)
+                            elif function_name == "list_tasks":
+                                result = list_tasks(**function_args)
+                            elif function_name == "complete_task":
+                                result = complete_task(**function_args)
+                            elif function_name == "delete_task":
+                                result = delete_task(**function_args)
+                            elif function_name == "update_task":
+                                result = update_task(**function_args)
+                            else:
+                                result = {"error": f"Unknown function: {function_name}"}
+
+                            tool_call_results.append({
+                                "tool_call_id": tool_call["id"],
+                                "role": "tool",
+                                "name": function_name,
+                                "content": str(result)
+                            })
+                        except Exception as e:
+                            tool_call_results.append({
+                                "tool_call_id": tool_call["id"],
+                                "role": "tool",
+                                "name": function_name,
+                                "content": f"Error executing tool: {str(e)}"
+                            })
+
+                    # Send the tool results back to the model for a final response
+                    # First add the assistant message that contained the tool calls
+                    assistant_message_with_tool_calls = {
+                        "role": "assistant",
+                        "content": choice["message"].get("content"),
+                        "tool_calls": choice["message"]["tool_calls"]
+                    }
+                    updated_messages = messages + [assistant_message_with_tool_calls] + tool_call_results
+
+                    # Make a second API call with the tool results
+                    payload["messages"] = updated_messages
+                    response = client.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        json=payload,
+                        headers=headers
+                    )
+
+                    response.raise_for_status()
+                    data = response.json()
+
+                    if "choices" in data and len(data["choices"]) > 0:
+                        content = data["choices"][0]["message"]["content"]
+                        return content.strip() if content else ""
+                    else:
+                        logger.error(f"No choices found in OpenRouter response: {data}")
+                        return "I'm having trouble responding right now. Please try again."
+                else:
+                    # No tool calls, return the content directly
+                    content = choice["message"]["content"]
+                    return content.strip() if content else ""
             else:
                 logger.error(f"No choices found in OpenRouter response: {data}")
                 return "I'm having trouble responding right now. Please try again."
