@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.api.routes import conversation, error
 from backend.middleware.error_handler import setup_error_handling
-from backend.database import engine
+from backend.database import get_engine
 from backend.api.models.conversation_state import ConversationState
 from backend.api.models.error_context import ErrorContext
 from sqlmodel import SQLModel
@@ -27,12 +27,8 @@ setup_error_handling(app)
 app.include_router(conversation.router)
 app.include_router(error.router)
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database tables on startup"""
-    print("Creating database tables...")
-    SQLModel.metadata.create_all(bind=engine)
-    print("Database tables created successfully!")
+# Removed blocking database initialization from startup to prevent hanging
+# Database tables will be created when first accessed
 
 @app.get("/")
 def read_root():
@@ -44,4 +40,9 @@ def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    import os
+    # Get port from environment variable (Hugging Face Spaces sets this)
+    port = int(os.environ.get("PORT", 7860))  # Default to 7860 as requested
+
+    # Hugging Face Spaces requires binding to 0.0.0.0
+    uvicorn.run(app, host="0.0.0.0", port=port)

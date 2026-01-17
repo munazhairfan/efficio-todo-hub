@@ -1,0 +1,114 @@
+openapi: 3.0.0
+info:
+  title: OpenRouter Client API Contract
+  version: 1.0.0
+  description: API contract for the OpenRouter client integration
+
+paths:
+  /internal/openrouter/chat:
+    post:
+      summary: Send a message to OpenRouter and receive AI response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenRouterRequest'
+      responses:
+        '200':
+          description: Successful AI response from OpenRouter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenRouterResponse'
+        '400':
+          description: Bad request - invalid input parameters
+        '401':
+          description: Unauthorized - invalid or missing API key
+        '408':
+          description: Request timeout
+        '500':
+          description: Internal server error - OpenRouter service unavailable
+        '503':
+          description: Service unavailable - OpenRouter temporarily down
+
+components:
+  schemas:
+    OpenRouterRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          description: The AI model to use for completion
+          example: "openai/gpt-3.5-turbo"
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+          description: The conversation history
+        temperature:
+          type: number
+          description: Controls randomness of responses (0.0-1.0)
+          example: 0.7
+        max_tokens:
+          type: integer
+          description: Maximum number of tokens to generate
+          example: 1000
+      required:
+        - model
+        - messages
+
+    Message:
+      type: object
+      properties:
+        role:
+          type: string
+          description: The role of the message author
+          enum: [system, user, assistant]
+        content:
+          type: string
+          description: The content of the message
+      required:
+        - role
+        - content
+
+    OpenRouterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the response
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Choice'
+        usage:
+          $ref: '#/components/schemas/Usage'
+        created:
+          type: integer
+          description: Unix timestamp of when the response was created
+
+    Choice:
+      type: object
+      properties:
+        index:
+          type: integer
+          description: Index of the choice
+        message:
+          $ref: '#/components/schemas/Message'
+        finish_reason:
+          type: string
+          description: Reason the model stopped generating
+
+    Usage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+          description: Number of tokens in the prompt
+        completion_tokens:
+          type: integer
+          description: Number of tokens in the completion
+        total_tokens:
+          type: integer
+          description: Total number of tokens used

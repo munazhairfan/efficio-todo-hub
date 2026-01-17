@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: Chat API for Todo System
+  description: API for chatbot interactions with the todo system
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.todo-system.com
+    description: Production server
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message to the chatbot
+      description: Process a user message and return AI response with potential task operations
+      operationId: chatEndpoint
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the authenticated user
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response from the chatbot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user not authorized to access this resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+      x-codegen-request-body-name: chatRequest
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: The user's message to the chatbot
+          minLength: 1
+          maxLength: 1000
+          example: "Add a task to buy groceries"
+        conversation_id:
+          type: integer
+          description: ID of existing conversation (null for new conversation)
+          minimum: 1
+          nullable: true
+          example: 123
+    ChatResponse:
+      type: object
+      required:
+        - conversation_id
+        - response
+        - message_id
+      properties:
+        conversation_id:
+          type: integer
+          description: ID of the conversation
+          example: 123
+        response:
+          type: string
+          description: The chatbot's response to the user
+          example: "✅ Great! I've added the task 'buy groceries' to your list!"
+        message_id:
+          type: integer
+          description: ID of the message in the conversation
+          example: 456
+        conversation_title:
+          type: string
+          description: Title of the conversation (only returned when creating new conversation)
+          nullable: true
+          example: "Conversation 2023-12-31 15:30"
+        has_tool_calls:
+          type: boolean
+          description: Whether the response suggests potential tool usage
+          default: false
+        tool_calls:
+          type: array
+          description: Information about potential tool calls
+          items:
+            $ref: '#/components/schemas/ToolCallInfo'
+    ToolCallInfo:
+      type: object
+      properties:
+        tool_name:
+          type: string
+          description: Name of the tool that might be called
+          example: "todo_manager"
+        parameters:
+          type: object
+          description: Parameters for the potential tool call
+          additionalProperties: true
+        execution_status:
+          type: string
+          description: Status of the tool call execution
+          enum: [pending, executed, failed]
+          nullable: true
+          example: "pending"
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Invalid token"

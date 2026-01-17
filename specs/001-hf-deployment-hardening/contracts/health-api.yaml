@@ -1,0 +1,78 @@
+openapi: 3.0.0
+info:
+  title: Health Check API for Hugging Face Deployment
+  version: 1.0.0
+  description: API endpoints for health checking and deployment verification
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Verify that the application is running and healthy
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2026-01-16T12:00:00Z"
+                  uptime:
+                    type: number
+                    example: 120
+                    description: Uptime in seconds
+
+  /ready:
+    get:
+      summary: Readiness check endpoint
+      description: Verify that the application is ready to accept traffic
+      responses:
+        '200':
+          description: Application is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: boolean
+                        example: true
+                      environment:
+                        type: boolean
+                        example: true
+
+  /deployment-info:
+    get:
+      summary: Deployment information
+      description: Get information about the current deployment
+      responses:
+        '200':
+          description: Deployment information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deployment_id:
+                    type: string
+                    example: "hf-space-abc123"
+                  environment:
+                    type: string
+                    example: "production"
+                  startup_time:
+                    type: string
+                    format: date-time
+                    example: "2026-01-16T12:00:00Z"

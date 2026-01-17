@@ -1,0 +1,115 @@
+openapi: 3.0.0
+info:
+  title: OpenRouter API Integration
+  version: 1.0.0
+  description: Specification for integrating with OpenRouter AI service
+
+paths:
+  /internal/openrouter/chat:
+    post:
+      summary: Send message to OpenRouter and receive AI response
+      description: Internal endpoint to communicate with OpenRouter API
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum: [system, user, assistant]
+                      content:
+                        type: string
+                  description: Conversation history with roles and content
+                model:
+                  type: string
+                  default: "openai/gpt-3.5-turbo"
+                  description: AI model to use for the response
+                temperature:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  default: 0.7
+                  description: Controls randomness of the response
+      responses:
+        '200':
+          description: AI response from OpenRouter
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The AI-generated response text
+                  success:
+                    type: boolean
+                    default: true
+                  model_used:
+                    type: string
+                    description: The model that generated the response
+        '400':
+          description: Bad request - invalid input parameters
+        '401':
+          description: Unauthorized - invalid or missing API key
+        '500':
+          description: Internal server error - OpenRouter API failure
+
+  /api/{user_id}/chat:
+    post:
+      summary: Chat endpoint with OpenRouter integration
+      description: Enhanced chat endpoint that uses OpenRouter for AI responses
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                conversation_id:
+                  type: integer
+                  nullable: true
+      responses:
+        '200':
+          description: Chat response with AI-generated content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  conversation_id:
+                    type: integer
+                  response:
+                    type: string
+                    description: AI-generated response from OpenRouter
+                  message_id:
+                    type: integer
+                  conversation_title:
+                    type: string
+                    nullable: true
+                  tool_calls:
+                    type: array
+                    items:
+                      type: object
+                  has_tool_calls:
+                    type: boolean
+        '401':
+          description: Unauthorized access
+        '403':
+          description: Forbidden access to conversation
+        '404':
+          description: Conversation not found

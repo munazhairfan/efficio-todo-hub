@@ -1,0 +1,294 @@
+openapi: 3.0.3
+info:
+  title: Todo API for Todo System
+  description: API for direct todo operations in the todo system
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.todo-system.com
+    description: Production server
+paths:
+  /api/todos:
+    get:
+      summary: Get all todos for the authenticated user
+      description: Retrieve a list of all todos belonging to the authenticated user
+      operationId: getTodos
+      responses:
+        '200':
+          description: Successfully retrieved todos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Todo'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new todo
+      description: Create a new todo item for the authenticated user
+      operationId: createTodo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTodoRequest'
+      responses:
+        '201':
+          description: Todo created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+  /api/todos/{id}:
+    get:
+      summary: Get a specific todo
+      description: Retrieve a specific todo by ID
+      operationId: getTodo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the todo to retrieve
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Successfully retrieved todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user not authorized to access this todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a specific todo
+      description: Update an existing todo by ID
+      operationId: updateTodo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the todo to update
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTodoRequest'
+      responses:
+        '200':
+          description: Todo updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Todo'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user not authorized to update this todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a specific todo
+      description: Delete an existing todo by ID
+      operationId: deleteTodo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the todo to delete
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '204':
+          description: Todo deleted successfully
+        '401':
+          description: Unauthorized - invalid or missing JWT token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - user not authorized to delete this todo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found - todo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Todo:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+        - user_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the todo
+          minimum: 1
+          example: 123
+        title:
+          type: string
+          description: Title of the todo
+          minLength: 1
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Optional description of the todo
+          maxLength: 1000
+          nullable: true
+          example: "Need to buy milk, bread, and eggs"
+        completed:
+          type: boolean
+          description: Whether the todo is completed
+          default: false
+          example: false
+        user_id:
+          type: integer
+          description: ID of the user who owns this todo
+          minimum: 1
+          example: 456
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the todo was created
+          example: "2023-12-31T15:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when the todo was last updated
+          example: "2023-12-31T15:30:00Z"
+    CreateTodoRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: Title of the todo
+          minLength: 1
+          maxLength: 255
+          example: "Buy groceries"
+        description:
+          type: string
+          description: Optional description of the todo
+          maxLength: 1000
+          nullable: true
+          example: "Need to buy milk, bread, and eggs"
+        completed:
+          type: boolean
+          description: Whether the todo is completed initially
+          default: false
+          example: false
+    UpdateTodoRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Updated title of the todo
+          minLength: 1
+          maxLength: 255
+          example: "Buy groceries and household items"
+        description:
+          type: string
+          description: Updated description of the todo
+          maxLength: 1000
+          nullable: true
+          example: "Need to buy milk, bread, eggs, and paper towels"
+        completed:
+          type: boolean
+          description: Updated completion status of the todo
+          example: true
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Todo not found"

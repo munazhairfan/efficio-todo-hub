@@ -34,6 +34,11 @@ Specifications are organized in /specs:
 ## Active Technologies
 - TypeScript (Frontend), Python 3.11 (Backend) + Better Auth (Frontend), FastAPI, SQLModel, PyJWT (Backend) (002-user-auth)
 - Neon PostgreSQL database for user data (002-user-auth)
+- Python 3.11 + FastAPI, uvicorn, pydantic, python-multipart, psycopg2-binary, sqlmodel, sqlalchemy (001-hf-deployment-hardening)
+- PostgreSQL (Neon) via environment variables (001-hf-deployment-hardening)
+- Python 3.11 + FastAPI, SQLModel, Alembic, httpx, pydantic, OpenRouter API (001-openrouter-integration)
+- Python 3.11, TypeScript/JavaScript (Node.js) + FastAPI, SQLModel, PostgreSQL, OpenRouter API, Next.js, Jest, pytest (001-testing-validation)
+- PostgreSQL (Neon) database with real persistence (001-testing-validation)
 
 ## Recent Changes
 - 002-user-auth: Added TypeScript (Frontend), Python 3.11 (Backend) + Better Auth (Frontend), FastAPI, SQLModel, PyJWT (Backend)

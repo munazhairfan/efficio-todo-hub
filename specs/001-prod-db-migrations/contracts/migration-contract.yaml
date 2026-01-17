@@ -1,0 +1,65 @@
+openapi: 3.0.0
+info:
+  title: Database Migration API Contract
+  version: 1.0.0
+  description: API contract for database migration operations
+
+paths:
+  /api/migrations/status:
+    get:
+      summary: Get current migration status
+      responses:
+        '200':
+          description: Current migration status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrationStatus'
+
+  /api/migrations/run:
+    post:
+      summary: Run pending migrations
+      responses:
+        '200':
+          description: Migrations applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MigrationResult'
+        '409':
+          description: Migration conflict or lock in place
+        '500':
+          description: Migration failed
+
+components:
+  schemas:
+    MigrationStatus:
+      type: object
+      properties:
+        current_revision:
+          type: string
+          description: Current migration revision
+        expected_revision:
+          type: string
+          description: Latest migration revision
+        needs_migration:
+          type: boolean
+          description: Whether migrations need to be applied
+        database_ready:
+          type: boolean
+          description: Whether database is ready for use
+
+    MigrationResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether migration was successful
+        applied_migrations:
+          type: array
+          items:
+            type: string
+          description: List of applied migration revisions
+        error:
+          type: string
+          description: Error message if migration failed
