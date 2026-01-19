@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.routes import conversation, error, users
 from middleware.error_handler import setup_error_handling
-from src.database import get_engine
+from database import get_engine
 from api.models.conversation_state import ConversationState
 from api.models.error_context import ErrorContext
 from src.models.user import User
