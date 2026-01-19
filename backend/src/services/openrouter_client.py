@@ -9,7 +9,7 @@ import os
 import httpx
 import logging
 from typing import List, Dict, Any, Optional
-from ..core.config import settings
+from src.core.config import settings
 
 
 logger = logging.getLogger(__name__)
@@ -77,7 +77,7 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
                 # Check if the AI wants to call a tool
                 if "tool_calls" in choice["message"]:
                     # Import the tools here to avoid circular imports
-                    from ..mcp_tools import add_task, list_tasks, complete_task, delete_task, update_task
+                    from src.mcp_tools import add_task, list_tasks, complete_task, delete_task, update_task
 
                     # Process each tool call
                     tool_call_results = []

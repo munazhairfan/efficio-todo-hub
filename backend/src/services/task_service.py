@@ -5,8 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 from datetime import datetime
 
-from ..models.task import Task, TaskCreate, TaskUpdate
-from ..database.session import get_db
+from src.models.task import Task, TaskCreate, TaskUpdate
+from src.database.session import get_db
 
 
 class TaskService:

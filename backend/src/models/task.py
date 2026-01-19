@@ -3,7 +3,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from ..database.models import BaseModel
+from src.database.models import BaseModel
 
 
 class Task(BaseModel):

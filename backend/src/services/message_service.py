@@ -5,8 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 from datetime import datetime
 
-from ..models.message import Message, MessageCreate
-from ..models.conversation import Conversation
+from src.models.message import Message, MessageCreate
+from src.models.conversation import Conversation
 
 
 class MessageService:

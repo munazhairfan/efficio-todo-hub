@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from ..database.models import BaseModel
+from src.database.models import BaseModel
 
 
 class Conversation(BaseModel):

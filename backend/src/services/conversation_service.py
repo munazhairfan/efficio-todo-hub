@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Optional
-from ..models.conversation import Conversation, ConversationCreate
-from ..models.message import Message
+from src.models.conversation import Conversation, ConversationCreate
+from src.models.message import Message
 from datetime import datetime
 
 

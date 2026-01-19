@@ -11,8 +11,8 @@ import re
 from typing import Dict, Any, Optional, Tuple
 from enum import Enum
 
-from ..mcp_tools import add_task, list_tasks, complete_task, delete_task, update_task
-from ..utils.errors import TaskNotFoundError, ValidationError, AuthorizationError
+from src.mcp_tools import add_task, list_tasks, complete_task, delete_task, update_task
+from utils.errors import TaskNotFoundError, ValidationError, AuthorizationError
 
 
 class IntentType(Enum):

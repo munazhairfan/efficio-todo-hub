@@ -12,14 +12,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from ..core.dependencies import get_db_session
-from ..core.config import settings
-from ..models.conversation import ConversationCreate, ConversationResponse
-from ..models.message import MessageCreate, MessageResponse
-from ..services.conversation_service import ConversationService
-from ..services.message_service import MessageService
-from ..services.openrouter_client import call_openrouter
-from ..services.task_intelligence_service import task_intelligence_service
+from src.core.dependencies import get_db_session
+from src.core.config import settings
+from src.models.conversation import ConversationCreate, ConversationResponse
+from src.models.message import MessageCreate, MessageResponse
+from src.services.conversation_service import ConversationService
+from src.services.message_service import MessageService
+from src.services.openrouter_client import call_openrouter
+from src.services.task_intelligence_service import task_intelligence_service
 
 router = APIRouter(prefix="/api/{user_id}", tags=["chat"])
 
