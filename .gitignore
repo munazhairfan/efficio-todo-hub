@@ -80,5 +80,4 @@ Thumbs.db
 *.env.production
 *.env.development
 
-# Hugging Face backend directory (for separate deployment)                                         
-/efficio-todo-hub-backend/  
+
