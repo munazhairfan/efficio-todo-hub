@@ -7,9 +7,9 @@ from pydantic import BaseModel
 from jose import jwt
 from passlib.context import CryptContext
 
-from ...database import get_session
-from ...src.core.config import settings
-from ..models.user import User, UserCreate, UserUpdate, UserResponse
+from src.database import get_session
+from src.core.config import settings
+from src.models.user import User, UserCreate, UserUpdate, UserResponse
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

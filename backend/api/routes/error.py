@@ -3,16 +3,12 @@ from sqlmodel import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from ..models.error_context import (
+from api.models.error_context import (
     ErrorContext, ErrorContextCreate, ErrorContextUpdate, ErrorContextResponse, ErrorTypeEnum
 )
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-from services.error_service import ErrorService
-from repositories.error_repository import ErrorRepository
-from database import get_session
+from src.services.error_service import ErrorService
+from src.repositories.error_repository import ErrorRepository
+from src.database import get_session
 
 
 router = APIRouter(prefix="/api/error", tags=["error"])
@@ -201,7 +197,7 @@ async def get_all_errors(
             error_type=error.error_type,
             original_request=error.original_request,
             error_message=error.error_message,
-            suggested_actions=error.error_context.suggested_actions,
+            suggested_actions=error.suggested_actions,
             timestamp=error.timestamp,
             handled=error.handled,
             technical_details=error.technical_details
