@@ -3,16 +3,25 @@ from typing import Generator
 try:
     # Try relative import when running as part of the package
     from .core.config import settings
+    from .src.models.user import User
+    from .api.models.conversation_state import ConversationState
+    from .api.models.error_context import ErrorContext
 except ImportError:
     # Fallback to absolute import when needed
     try:
         from backend.core.config import settings
+        from backend.src.models.user import User
+        from backend.api.models.conversation_state import ConversationState
+        from backend.api.models.error_context import ErrorContext
     except ImportError:
         # Last resort - import directly
         import sys
         import os
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         from core.config import settings
+        from src.models.user import User
+        from api.models.conversation_state import ConversationState
+        from api.models.error_context import ErrorContext
 
 
 # Create database engine lazily (only when needed)

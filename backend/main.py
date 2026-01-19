@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routes import conversation, error
+from api.routes import conversation, error, users
 from middleware.error_handler import setup_error_handling
 from src.database import get_engine
 from api.models.conversation_state import ConversationState
 from api.models.error_context import ErrorContext
+from src.models.user import User
 from sqlmodel import SQLModel
 
 
@@ -26,6 +27,13 @@ setup_error_handling(app)
 # Include API routes
 app.include_router(conversation.router)
 app.include_router(error.router)
+app.include_router(users.router)
+
+# Create all tables
+@app.on_event("startup")
+def on_startup():
+    engine = get_engine()
+    SQLModel.metadata.create_all(engine)
 
 # Removed blocking database initialization from startup to prevent hanging
 # Database tables will be created when first accessed
