@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from sqlmodel import Session, select
-from ..api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate
+from api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate
 
 
 class ConversationService:

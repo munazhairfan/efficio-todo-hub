@@ -1,6 +1,18 @@
 from sqlmodel import create_engine, Session
 from typing import Generator
-from .core.config import settings
+try:
+    # Try relative import when running as part of the package
+    from .core.config import settings
+except ImportError:
+    # Fallback to absolute import when needed
+    try:
+        from backend.core.config import settings
+    except ImportError:
+        # Last resort - import directly
+        import sys
+        import os
+        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from core.config import settings
 
 
 # Create database engine lazily (only when needed)

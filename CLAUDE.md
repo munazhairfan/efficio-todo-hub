@@ -39,6 +39,7 @@ Specifications are organized in /specs:
 - Python 3.11 + FastAPI, SQLModel, Alembic, httpx, pydantic, OpenRouter API (001-openrouter-integration)
 - Python 3.11, TypeScript/JavaScript (Node.js) + FastAPI, SQLModel, PostgreSQL, OpenRouter API, Next.js, Jest, pytest (001-testing-validation)
 - PostgreSQL (Neon) database with real persistence (001-testing-validation)
+- Python 3.11, TypeScript/JavaScript (Node.js) + FastAPI, SQLModel, PostgreSQL, OpenRouter API, Next.js, Tailwind CSS (001-single-assistant-arch)
 
 ## Recent Changes
 - 002-user-auth: Added TypeScript (Frontend), Python 3.11 (Backend) + Better Auth (Frontend), FastAPI, SQLModel, PyJWT (Backend)

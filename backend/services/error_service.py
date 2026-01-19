@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from sqlmodel import Session, select
-from ..api.models.error_context import ErrorContext, ErrorTypeEnum, ErrorContextCreate, ErrorContextUpdate
+from api.models.error_context import ErrorContext, ErrorTypeEnum, ErrorContextCreate, ErrorContextUpdate
 
 
 class ErrorService:

@@ -19,6 +19,7 @@ from ..models.message import MessageCreate, MessageResponse
 from ..services.conversation_service import ConversationService
 from ..services.message_service import MessageService
 from ..services.openrouter_client import call_openrouter
+from ..services.task_intelligence_service import task_intelligence_service
 
 router = APIRouter(prefix="/api/{user_id}", tags=["chat"])
 
@@ -169,116 +170,128 @@ def chat_endpoint(
     )
     user_message = message_service.create_message(user_message_data)
 
-    # Fetch conversation history to provide context to the AI agent
-    conversation_history = message_service.get_messages_by_conversation(conversation_id)
+    # First, check if the message should be handled by the local task intelligence service
+    # This handles task-related requests with specific logic before calling OpenRouter
+    task_result = task_intelligence_service.process_task_request(str(user_id), chat_request.message)
 
-    # Build messages for OpenRouter API
-    # Include system instruction, conversation history, and current user message
-    messages = [
-        {
-            "role": "system",
-            "content": "You are a helpful task management assistant. Help users manage their tasks and be friendly and encouraging."
-        }
-    ]
+    if task_result and task_result.get("handled_locally"):
+        # The request was handled by the local service, return the response directly
+        ai_response_content = task_result["response"]
 
-    # Add conversation history
-    for msg in conversation_history:
-        role = "assistant" if msg.role == "assistant" else "user"
+        # If there was a tool call, log it
+        if "tool_call" in task_result:
+            logger.info(f"Local task processing resulted in tool call: {task_result['tool_call'].get('name')} for user_id: {user_id}")
+    else:
+        # Fetch conversation history to provide context to the AI agent
+        conversation_history = message_service.get_messages_by_conversation(conversation_id)
+
+        # Build messages for OpenRouter API
+        # Include system instruction, conversation history, and current user message
+        messages = [
+            {
+                "role": "system",
+                "content": "You are a helpful task management assistant. Help users manage their tasks and be friendly and encouraging."
+            }
+        ]
+
+        # Add conversation history
+        for msg in conversation_history:
+            role = "assistant" if msg.role == "assistant" else "user"
+            messages.append({
+                "role": role,
+                "content": msg.content
+            })
+
+        # Add current user message
         messages.append({
-            "role": role,
-            "content": msg.content
+            "role": "user",
+            "content": chat_request.message
         })
 
-    # Add current user message
-    messages.append({
-        "role": "user",
-        "content": chat_request.message
-    })
+        # Prepare MCP tools schema for potential use by the AI
+        mcp_tools_schemas = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "add_task",
+                    "description": "Create a new task for the user",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string", "description": "The user's ID"},
+                            "title": {"type": "string", "description": "The title of the task to create"},
+                            "description": {"type": "string", "description": "Detailed description of the task (optional)"}
+                        },
+                        "required": ["user_id", "title"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "list_tasks",
+                    "description": "Retrieve tasks for the user",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string", "description": "The user's ID"},
+                            "status": {"type": "string", "description": "Filter by status ('all', 'pending', 'completed'), defaults to 'all'"}
+                        },
+                        "required": ["user_id"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "complete_task",
+                    "description": "Mark a task as completed",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string", "description": "The user's ID"},
+                            "task_id": {"type": "integer", "description": "The ID of the task to complete"}
+                        },
+                        "required": ["user_id", "task_id"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "delete_task",
+                    "description": "Remove a task",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string", "description": "The user's ID"},
+                            "task_id": {"type": "integer", "description": "The ID of the task to delete"}
+                        },
+                        "required": ["user_id", "task_id"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "update_task",
+                    "description": "Update task title or description",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "user_id": {"type": "string", "description": "The user's ID"},
+                            "task_id": {"type": "integer", "description": "The ID of the task to update"},
+                            "title": {"type": "string", "description": "New title for the task (optional)"},
+                            "description": {"type": "string", "description": "New description for the task (optional)"}
+                        },
+                        "required": ["user_id", "task_id"]
+                    }
+                }
+            }
+        ]
 
-    # Prepare MCP tools schema for potential use by the AI
-    mcp_tools_schemas = [
-        {
-            "type": "function",
-            "function": {
-                "name": "add_task",
-                "description": "Create a new task for the user",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string", "description": "The user's ID"},
-                        "title": {"type": "string", "description": "The title of the task to create"},
-                        "description": {"type": "string", "description": "Detailed description of the task (optional)"}
-                    },
-                    "required": ["user_id", "title"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "list_tasks",
-                "description": "Retrieve tasks for the user",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string", "description": "The user's ID"},
-                        "status": {"type": "string", "description": "Filter by status ('all', 'pending', 'completed'), defaults to 'all'"}
-                    },
-                    "required": ["user_id"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "complete_task",
-                "description": "Mark a task as completed",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string", "description": "The user's ID"},
-                        "task_id": {"type": "integer", "description": "The ID of the task to complete"}
-                    },
-                    "required": ["user_id", "task_id"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "delete_task",
-                "description": "Remove a task",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string", "description": "The user's ID"},
-                        "task_id": {"type": "integer", "description": "The ID of the task to delete"}
-                    },
-                    "required": ["user_id", "task_id"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "update_task",
-                "description": "Update task title or description",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "user_id": {"type": "string", "description": "The user's ID"},
-                        "task_id": {"type": "integer", "description": "The ID of the task to update"},
-                        "title": {"type": "string", "description": "New title for the task (optional)"},
-                        "description": {"type": "string", "description": "New description for the task (optional)"}
-                    },
-                    "required": ["user_id", "task_id"]
-                }
-            }
-        }
-    ]
-
-    # Call OpenRouter to get AI response
-    ai_response_content = call_openrouter(messages, tools=mcp_tools_schemas)
+        # Call OpenRouter to get AI response
+        ai_response_content = call_openrouter(messages, tools=mcp_tools_schemas)
 
     # Create the AI's response message
     ai_message_data = MessageCreate(

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from sqlmodel import Session, select
-from ..api.models.conversation_state import ConversationState
+from api.models.conversation_state import ConversationState
 
 
 class ConversationRepository:

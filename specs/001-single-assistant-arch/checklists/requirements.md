@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-01-18
-**Feature**: [Link to spec.md](../specs/001-single-assistant/spec.md)
+**Feature**: [Link to spec.md](../spec.md)
 
 ## Content Quality
 
@@ -31,4 +31,4 @@
 
 ## Notes
 
-- All validation items pass
+- Items marked complete - specification is ready for planning phase

@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api.routes import conversation, error
-from backend.middleware.error_handler import setup_error_handling
-from backend.database import get_engine
-from backend.api.models.conversation_state import ConversationState
-from backend.api.models.error_context import ErrorContext
+from api.routes import conversation, error
+from middleware.error_handler import setup_error_handling
+from src.database import get_engine
+from api.models.conversation_state import ConversationState
+from api.models.error_context import ErrorContext
 from sqlmodel import SQLModel
 
 

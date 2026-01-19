@@ -6,12 +6,13 @@ from datetime import datetime, timedelta
 from ..models.conversation_state import (
     ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
 )
-from ..services.conversation_service import ConversationService
-from ..utils.intent_detector import get_intent_detector
-from ..utils.question_generator import get_question_generator
-from ..utils.ambiguous_pattern_matcher import get_ambiguous_pattern_matcher
-from ..utils.vague_term_detector import get_vague_term_detector
-from ..database import get_session
+from ...services.conversation_service import ConversationService
+from ...utils.intent_detector import get_intent_detector
+from ...utils.question_generator import get_question_generator
+from ...utils.ambiguous_pattern_matcher import get_ambiguous_pattern_matcher
+from ...utils.vague_term_detector import get_vague_term_detector
+from ...database import get_session
+from ...services.task_intelligence_service import task_intelligence_service
 
 
 router = APIRouter(prefix="/api/conversation", tags=["conversation"])
@@ -45,6 +46,32 @@ async def clarify_conversation(
 
     # Initialize services
     conv_service = ConversationService(session)
+
+    # Extract user ID from context if available, otherwise use a default
+    user_id = context.get("user_id", "temp_user")
+
+    # First, try to process the user input through the task intelligence service
+    # This handles task-related requests with specific logic
+    task_result = task_intelligence_service.process_task_request(str(user_id), user_input)
+
+    if task_result and task_result.get("handled_locally"):
+        # The request was handled by the task intelligence service
+        # Return the response directly
+        response_data = {
+            "responseType": "success",
+            "message": task_result["response"],
+            "clarifyingQuestions": [],
+            "suggestedActions": [],
+            "conversationId": None,
+            "analysis": {
+                "intent": {"is_ambiguous": False},
+                "ambiguity": {"is_ambiguous": False},
+                "vagueness": {"is_vague": False}
+            }
+        }
+        return response_data
+
+    # If the task intelligence service didn't handle it, fall back to the old detection system
     intent_detector = get_intent_detector()
     question_generator = get_question_generator()
     pattern_matcher = get_ambiguous_pattern_matcher()
@@ -241,6 +268,30 @@ async def analyze_user_input(
             detail="input is required"
         )
 
+    # Extract user ID from context if available, otherwise use a default
+    context = data.get("context", {})
+    user_id = context.get("user_id", "temp_user")
+
+    # First, try to process the user input through the task intelligence service
+    # This handles task-related requests with specific logic
+    task_result = task_intelligence_service.process_task_request(str(user_id), user_input)
+
+    if task_result and task_result.get("handled_locally"):
+        # The request was handled by the task intelligence service
+        # Return analysis indicating no clarification needed since it's handled
+        return {
+            "input": user_input,
+            "analysis": {
+                "intent": {"is_ambiguous": False},
+                "ambiguity": {"is_ambiguous": False},
+                "vagueness": {"is_vague": False}
+            },
+            "needs_clarification": False,
+            "clarifying_questions": [],
+            "handled_locally": True
+        }
+
+    # If the task intelligence service didn't handle it, fall back to the old detection system
     intent_detector = get_intent_detector()
     pattern_matcher = get_ambiguous_pattern_matcher()
     vague_detector = get_vague_term_detector()
@@ -264,5 +315,6 @@ async def analyze_user_input(
             "vagueness": vagueness_analysis
         },
         "needs_clarification": intent_result['is_ambiguous'] or ambiguity_analysis['is_ambiguous'] or vagueness_analysis['is_vague'],
-        "clarifying_questions": clarifying_questions[:3]  # Limit to 3 questions
+        "clarifying_questions": clarifying_questions[:3],  # Limit to 3 questions
+        "handled_locally": False
     }

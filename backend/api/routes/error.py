@@ -6,9 +6,13 @@ from datetime import datetime
 from ..models.error_context import (
     ErrorContext, ErrorContextCreate, ErrorContextUpdate, ErrorContextResponse, ErrorTypeEnum
 )
-from ..services.error_service import ErrorService
-from ..repositories.error_repository import ErrorRepository
-from ..database import get_session
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+from services.error_service import ErrorService
+from repositories.error_repository import ErrorRepository
+from database import get_session
 
 
 router = APIRouter(prefix="/api/error", tags=["error"])

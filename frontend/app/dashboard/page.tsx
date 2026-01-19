@@ -80,13 +80,33 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!newTodo.trim()) return;
 
-    // Process through conversation API for robustness
-    await processUserInput(`Add a new task: ${newTodo}`);
+    // Direct API call to bypass assistant - traditional UI should not go through assistant
+    try {
+      const response = await api.createTodo({
+        title: newTodo,
+        description: '',
+        completed: false
+      });
+      setTodos([response, ...todos]);
+      setNewTodo('');
+    } catch (err) {
+      setError('Failed to create todo');
+      console.error('Error creating todo:', err);
+    }
   };
 
   const toggleTodo = async (todo: Todo) => {
-    // Process through conversation API for robustness
-    await processUserInput(`Mark task "${todo.title}" as ${todo.completed ? 'incomplete' : 'complete'}`);
+    // Direct API call to bypass assistant - manual UI actions should not go through assistant
+    try {
+      const updatedTodo = await api.updateTodo(todo.id, {
+        ...todo,
+        completed: !todo.completed
+      });
+      setTodos(todos.map(t => t.id === updatedTodo.id ? updatedTodo : t));
+    } catch (err) {
+      setError('Failed to update todo');
+      console.error('Error updating todo:', err);
+    }
   };
 
   const deleteTodo = async (id: string) => {
@@ -144,7 +164,13 @@ export default function DashboardPage() {
   const processUserInput = async (input: string, context: Record<string, any> = {}) => {
     setIsProcessing(true);
     try {
-      const response = await conversationApi.clarify(sessionId, input, context);
+      // Include user ID in context for the task intelligence service
+      const contextWithUser = {
+        ...context,
+        user_id: user?.id || 'unknown'
+      };
+
+      const response = await conversationApi.clarify(sessionId, input, contextWithUser);
 
       if (response.responseType === 'clarification') {
         // Show clarification dialog
@@ -169,7 +195,8 @@ export default function DashboardPage() {
     // Process the user's answer to the clarification question
     await processUserInput(answer, {
       ...currentClarificationContext,
-      clarificationAnswer: answer
+      clarificationAnswer: answer,
+      user_id: user?.id || 'unknown'
     });
   };
 
@@ -271,12 +298,12 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Chat Interface for Natural Language Input */}
+        {/* Unified Assistant Interface */}
         <Card className="border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl mb-8">
           <CardHeader>
             <CardTitle className="text-2xl font-black text-merlot flex items-center gap-2">
               <MessageSquare className="h-6 w-6" />
-              Natural Language Assistant
+              Assistant
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -284,7 +311,7 @@ export default function DashboardPage() {
               <Input
                 value={newTodo}
                 onChange={(e) => setNewTodo(e.target.value)}
-                placeholder="Tell me what you want to do with your tasks..."
+                placeholder="Ask me anything - add tasks, update, delete, list, or just chat..."
                 className="h-12 border-2 border-merlot text-lg rounded-lg px-4"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
@@ -310,7 +337,7 @@ export default function DashboardPage() {
                 {isProcessing ? 'Processing...' : 'Send'}
               </Button>
             </div>
-            <p className="text-sm text-gray-600 mt-2">Example: "Add a new task to buy groceries", "Mark the first task as complete", "Delete the task about laundry"</p>
+            <p className="text-sm text-gray-600 mt-2">Examples: "Add a task to buy groceries", "Show my tasks", "Mark task #1 as complete", "Delete the laundry task", "How are you?"</p>
           </CardContent>
         </Card>
 
@@ -457,20 +484,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Enhanced Chat Interface */}
-        <Card className="border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl mt-8">
-          <CardHeader>
-            <CardTitle className="text-2xl font-black text-merlot flex items-center gap-2">
-              <MessageSquare className="h-6 w-6" />
-              Chat with Assistant
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {user && (
-              <ChatInterface userId={user.id} />
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Clarification Dialog */}
