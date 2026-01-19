@@ -22,7 +22,8 @@ export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated, signout } = useAuth();
   const router = useRouter();
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [newTodo, setNewTodo] = useState('');
+  const [newTodo, setNewTodo] = useState(''); // For traditional form
+  const [assistantInput, setAssistantInput] = useState(''); // For assistant input
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
@@ -89,6 +90,7 @@ export default function DashboardPage() {
       });
       setTodos([response, ...todos]);
       setNewTodo('');
+      setAssistantInput(''); // Clear assistant input too to avoid confusion
     } catch (err) {
       setError('Failed to create todo');
       console.error('Error creating todo:', err);
@@ -217,7 +219,8 @@ export default function DashboardPage() {
               completed: false
             });
             setTodos([response, ...todos]);
-            setNewTodo('');
+            setNewTodo(''); // For traditional form input
+            setAssistantInput(''); // For assistant input
           } catch (err) {
             setError('Failed to create todo');
             console.error('Error creating todo:', err);
@@ -309,28 +312,28 @@ export default function DashboardPage() {
           <CardContent>
             <div className="flex gap-2">
               <Input
-                value={newTodo}
-                onChange={(e) => setNewTodo(e.target.value)}
+                value={assistantInput}
+                onChange={(e) => setAssistantInput(e.target.value)}
                 placeholder="Ask me anything - add tasks, update, delete, list, or just chat..."
                 className="h-12 border-2 border-merlot text-lg rounded-lg px-4"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
-                    if (newTodo.trim()) {
-                      processUserInput(newTodo);
-                      setNewTodo('');
+                    if (assistantInput.trim()) {
+                      processUserInput(assistantInput);
+                      setAssistantInput('');
                     }
                   }
                 }}
               />
               <Button
                 onClick={() => {
-                  if (newTodo.trim()) {
-                    processUserInput(newTodo);
-                    setNewTodo('');
+                  if (assistantInput.trim()) {
+                    processUserInput(assistantInput);
+                    setAssistantInput('');
                   }
                 }}
-                disabled={isProcessing || !newTodo.trim()}
+                disabled={isProcessing || !assistantInput.trim()}
                 className="h-12 bg-mojo hover:bg-merlot text-white font-black text-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all rounded-xl"
               >
                 <Send className="mr-2 h-5 w-5" />
