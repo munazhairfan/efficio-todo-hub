@@ -13,7 +13,43 @@ export async function POST(request: NextRequest) {
     }
 
     const endpoint = pathParts[1];
-    const backendUrl = `${process.env.BACKEND_URL || 'http://localhost:8000'}/api/conversation/${endpoint}`;
+
+    // Check if BACKEND_URL is configured
+    if (!process.env.BACKEND_URL || process.env.BACKEND_URL === 'http://localhost:8000') {
+      // Return a mock response when backend is not configured
+      const body = await request.json();
+
+      // Mock response for conversation endpoints
+      if (endpoint.includes('analyze-input')) {
+        const userInput = body.input || "";
+        const hasAmbiguity = userInput.toLowerCase().includes("what") || userInput.toLowerCase().includes("how");
+
+        return new Response(JSON.stringify({
+          input: userInput,
+          analysis: {
+            intent: { is_ambiguous: hasAmbiguity },
+            ambiguity: { is_ambiguous: hasAmbiguity },
+            vagueness: { is_vague: userInput.length < 5 }
+          },
+          needs_clarification: hasAmbiguity,
+          clarifying_questions: hasAmbiguity ? ["Could you provide more details?"] : [],
+          handled_locally: false
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(JSON.stringify({
+        error: 'Backend service not configured',
+        message: 'Conversation service is not available'
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const backendUrl = `${process.env.BACKEND_URL}/api/conversation/${endpoint}`;
 
     // Forward the request to the backend
     const body = await request.json();
@@ -34,8 +70,36 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Conversation API error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500,
+    // Return a fallback response
+    const { pathname } = new URL(request.url);
+    const pathParts = pathname.split('/api/conversation/');
+    const endpoint = pathParts[1] || '';
+
+    if (endpoint.includes('analyze-input')) {
+      const body = await request.json();
+      const userInput = body.input || "";
+
+      return new Response(JSON.stringify({
+        input: userInput,
+        analysis: {
+          intent: { is_ambiguous: false },
+          ambiguity: { is_ambiguous: false },
+          vagueness: { is_vague: false }
+        },
+        needs_clarification: false,
+        clarifying_questions: [],
+        handled_locally: false
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({
+      error: 'Service temporarily unavailable',
+      message: 'Conversation service is temporarily down, please try again later'
+    }), {
+      status: 503,
       headers: { 'Content-Type': 'application/json' },
     });
   }
