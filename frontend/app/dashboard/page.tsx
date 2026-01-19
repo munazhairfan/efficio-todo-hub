@@ -25,7 +25,8 @@ export default function DashboardPage() {
   const [newTodo, setNewTodo] = useState(''); // For traditional form
   const [assistantInput, setAssistantInput] = useState(''); // For assistant input
   const [pageLoading, setPageLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // General error
+  const [assistantError, setAssistantError] = useState(''); // Assistant-specific error
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -165,6 +166,7 @@ export default function DashboardPage() {
 
   const processUserInput = async (input: string, context: Record<string, any> = {}) => {
     setIsProcessing(true);
+    setAssistantError(''); // Clear any previous assistant errors
     try {
       // Include user ID in context for the task intelligence service
       const contextWithUser = {
@@ -187,7 +189,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error('Error processing user input:', err);
-      setError('Failed to process your request. Please try again.');
+      setAssistantError('Failed to process your request. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -343,6 +345,38 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-600 mt-2">Examples: "Add a task to buy groceries", "Show my tasks", "Mark task #1 as complete", "Delete the laundry task", "How are you?"</p>
           </CardContent>
         </Card>
+
+        {/* Assistant Error Display */}
+        {assistantError && (
+          <Card className="border-4 border-red-500 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] rounded-xl mb-8">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-red-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-bold">Assistant Error:</span>
+                </div>
+                <button
+                  onClick={() => setAssistantError('')}
+                  className="text-red-700 hover:text-red-900"
+                  aria-label="Dismiss error"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-red-600 ml-7">{assistantError}</p>
+              <div className="mt-2 ml-7 text-sm text-red-500">
+                <p>Suggestions:</p>
+                <ul className="list-disc pl-5 mt-1">
+                  <li>Check your internet connection</li>
+                  <li>Verify the assistant service is running</li>
+                  <li>Try again in a moment</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Traditional Add Todo Form */}
         <Card className="border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl mb-8">
