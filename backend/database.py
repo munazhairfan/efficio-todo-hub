@@ -2,7 +2,7 @@ from sqlmodel import create_engine, Session
 from typing import Generator
 try:
     # Try relative import when running as part of the package
-    from .core.config import settings
+    from .src.core.config import settings
     from .src.models.user import User
     from .api.models.conversation_state import ConversationState
     from .api.models.error_context import ErrorContext
@@ -18,7 +18,7 @@ except ImportError:
         import sys
         import os
         sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        from core.config import settings
+        from src.core.config import settings
         from src.models.user import User
         from api.models.conversation_state import ConversationState
         from api.models.error_context import ErrorContext
