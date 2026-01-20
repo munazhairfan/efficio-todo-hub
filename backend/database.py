@@ -9,7 +9,8 @@ try:
 except ImportError:
     # Fallback to absolute import when needed
     try:
-        from backend.core.config import settings
+        # For when this is run from the parent directory where backend is a subdirectory
+        from backend.src.core.config import settings
         from backend.src.models.user import User
         from backend.api.models.conversation_state import ConversationState
         from backend.api.models.error_context import ErrorContext

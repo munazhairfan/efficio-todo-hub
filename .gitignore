@@ -84,3 +84,6 @@ Thumbs.db
 
 # Hugging Face backend directory (for separate deployment)
 /efficio-todo-hub-backend/
+
+# Claude settings
+.claude/
