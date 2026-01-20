@@ -84,13 +84,41 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             request_path = str(request.url.path)
 
             for pattern in self.endpoint_patterns:
-                # Replace {user_id} with a pattern that matches digits
-                # Convert to regex pattern for proper matching
-                import re
-                regex_pattern = pattern.replace("{user_id}", r"\d+")  # Match one or more digits
-                if re.fullmatch(regex_pattern, request_path) or regex_pattern in request_path:
-                    should_limit = True
-                    break
+                # Simple string-based pattern matching that's safer
+                # Replace {user_id} with a placeholder and check if the path matches
+                # This is safer than using regex which might cause import issues
+                if "{user_id}" in pattern:
+                    # Create a basic pattern match without complex regex
+                    base_pattern = pattern.replace("{user_id}", "")
+                    # Check if the request path contains the base pattern
+                    if base_pattern in request_path:
+                        # Additional check to see if there's a user ID pattern in the right place
+                        path_parts = request_path.split("/")
+                        pattern_parts = pattern.split("/")
+
+                        # Do a more careful comparison to avoid false matches
+                        if len(path_parts) >= len(pattern_parts):
+                            should_limit = True
+                            for i, pattern_part in enumerate(pattern_parts):
+                                if i >= len(path_parts):
+                                    should_limit = False
+                                    break
+                                if pattern_part == "{user_id}":
+                                    # Check if this part is a digit (user_id)
+                                    if not path_parts[i].isdigit():
+                                        should_limit = False
+                                        break
+                                elif path_parts[i] != pattern_part:
+                                    should_limit = False
+                                    break
+
+                            if should_limit:
+                                break
+                else:
+                    # Direct string match for patterns without {user_id}
+                    if pattern == request_path:
+                        should_limit = True
+                        break
 
             if should_limit:
                 # Extract user_id from path
@@ -117,5 +145,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.error(f"Error in rate limiter middleware: {e}")
             # Ensure the request continues even if rate limiter fails
-            response = await call_next(request)
-            return response
+            try:
+                response = await call_next(request)
+                return response
+            except Exception as call_next_error:
+                logger.error(f"Critical error in call_next: {call_next_error}")
+                # Return a basic response if all else fails
+                from starlette.responses import PlainTextResponse
+                return PlainTextResponse("Internal Server Error", status_code=500)
