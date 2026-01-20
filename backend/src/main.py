@@ -48,8 +48,8 @@ except ImportError as e:
 
 # Import error router with error handling - try different import paths
 try:
-    # Try relative import from package structure
-    from .api.routes.error import router as error_router
+    # Try relative import from package structure (going up from src to backend root)
+    from ..api.routes.error import router as error_router
     app.include_router(error_router)
 except ImportError as e:
     try:
