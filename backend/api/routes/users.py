@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from jose import jwt
 from passlib.context import CryptContext
 
-from src.database import get_session
+from database import get_session
 from src.core.config import settings
 from src.models.user import User, UserCreate, UserUpdate, UserResponse
 
