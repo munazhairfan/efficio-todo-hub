@@ -78,29 +78,44 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         """Process the request and enforce rate limiting."""
-        # Check if this endpoint should be rate limited
-        should_limit = any(pattern.replace("{user_id}", "[0-9]+") in str(request.url.path)
-                         for pattern in self.endpoint_patterns)
+        try:
+            # Check if this endpoint should be rate limited using proper pattern matching
+            should_limit = False
+            request_path = str(request.url.path)
 
-        if should_limit:
-            # Extract user_id from path
-            path_parts = request.url.path.split("/")
-            user_id = None
-            for i, part in enumerate(path_parts):
-                if part.isdigit():
-                    # Find the digit that comes after 'api' in the path
-                    if i > 0 and path_parts[i-1] == "api":
-                        user_id = part
-                        break
+            for pattern in self.endpoint_patterns:
+                # Replace {user_id} with a pattern that matches digits
+                # Convert to regex pattern for proper matching
+                import re
+                regex_pattern = pattern.replace("{user_id}", r"\d+")  # Match one or more digits
+                if re.fullmatch(regex_pattern, request_path) or regex_pattern in request_path:
+                    should_limit = True
+                    break
 
-            if user_id:
-                # Check if request is allowed
-                if not rate_limiter.is_allowed(user_id):
-                    logger.info(f"Rate limit exceeded for user_id: {user_id}")
-                    raise HTTPException(
-                        status_code=429,
-                        detail="Too many messages. Try again later."
-                    )
+            if should_limit:
+                # Extract user_id from path
+                path_parts = request_path.split("/")
+                user_id = None
+                for i, part in enumerate(path_parts):
+                    if part.isdigit():
+                        # Find the digit that comes after 'api' in the path
+                        if i > 0 and path_parts[i-1] == "api":
+                            user_id = part
+                            break
 
-        response = await call_next(request)
-        return response
+                if user_id:
+                    # Check if request is allowed
+                    if not rate_limiter.is_allowed(user_id):
+                        logger.info(f"Rate limit exceeded for user_id: {user_id}")
+                        raise HTTPException(
+                            status_code=429,
+                            detail="Too many messages. Try again later."
+                        )
+
+            response = await call_next(request)
+            return response
+        except Exception as e:
+            logger.error(f"Error in rate limiter middleware: {e}")
+            # Ensure the request continues even if rate limiter fails
+            response = await call_next(request)
+            return response
