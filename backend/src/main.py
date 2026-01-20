@@ -14,16 +14,16 @@ from .api.chat import router as chat_router
 from .middleware.rate_limiter import RateLimitMiddleware
 
 # Import conversation components directly
-from ..api.models.conversation_state import (
+from api.models.conversation_state import (
     ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
 )
-from ..services.conversation_service import ConversationService
-from ..utils.intent_detector import get_intent_detector
-from ..utils.question_generator import get_question_generator
-from ..utils.ambiguous_pattern_matcher import get_ambiguous_pattern_matcher
-from ..utils.vague_term_detector import get_vague_term_detector
-from ..database import get_session
-from .services.task_intelligence_service import task_intelligence_service
+from services.conversation_service import ConversationService
+from utils.intent_detector import get_intent_detector
+from utils.question_generator import get_question_generator
+from utils.ambiguous_pattern_matcher import get_ambiguous_pattern_matcher
+from utils.vague_term_detector import get_vague_term_detector
+from database import get_session
+from src.services.task_intelligence_service import task_intelligence_service
 
 # Create the FastAPI app
 app = FastAPI(
