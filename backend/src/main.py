@@ -44,6 +44,18 @@ app.add_middleware(
 # Add rate limiting middleware
 app.add_middleware(RateLimitMiddleware)
 
+# Add middleware to normalize URL paths (fix double slashes)
+@app.middleware("http")
+async def normalize_url_middleware(request, call_next):
+    # Normalize double slashes in the URL path
+    if '//' in request.url.path:
+        normalized_path = request.url.path.replace('//', '/')
+        # Update the request URL with the normalized path
+        request.scope['path'] = normalized_path
+
+    response = await call_next(request)
+    return response
+
 # Include API routes
 app.include_router(chat_router)
 
