@@ -4,8 +4,8 @@ from typing import Optional
 
 class Settings(BaseSettings):
     """Application settings"""
-    database_url: str  # Required - will be set via DATABASE_URL environment variable
-    secret_key: str  # Required - will be set via SECRET_KEY environment variable
+    database_url: str = "sqlite:///./test.db"  # Default to SQLite for development/testing
+    secret_key: str = "dev-secret-key-change-in-production"  # Default for development/testing
     openrouter_api_key: str = ""  # Optional - will be set via OPENROUTER_API_KEY environment variable if needed
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
