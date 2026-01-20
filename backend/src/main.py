@@ -35,7 +35,7 @@ app.include_router(chat_router)
 # Import conversation router with error handling - try different import paths
 try:
     # Try relative import from package structure
-    from api.routes.conversation import router as conversation_router
+    from .api.routes.conversation import router as conversation_router
     app.include_router(conversation_router)
 except ImportError as e:
     try:
@@ -49,7 +49,7 @@ except ImportError as e:
 # Import error router with error handling - try different import paths
 try:
     # Try relative import from package structure
-    from api.routes.error import router as error_router
+    from .api.routes.error import router as error_router
     app.include_router(error_router)
 except ImportError as e:
     try:
