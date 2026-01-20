@@ -26,26 +26,22 @@ from src.services.task_intelligence_service import task_intelligence_service
 router = APIRouter(prefix="/api/conversation", tags=["conversation"])
 
 
+import uuid
+
 @router.post("/clarify", response_model=Dict[str, Any])
 async def clarify_conversation(
-    *,
-    session: Session = Depends(get_session),
-    data: Dict[str, Any]
+    data: Dict[str, Any],
+    session: Session = Depends(get_session)
 ):
     """
     Submit a request that requires clarification or submit clarifying information.
     """
-    # Extract required fields
-    session_id = data.get("sessionId")
-    user_input = data.get("input", "")
-    context = data.get("context", {})
+    # Extract fields with more flexible handling
+    session_id = data.get("sessionId") or data.get("session_id") or str(uuid.uuid4())
+    user_input = data.get("input", data.get("message", data.get("text", "")))
+    context = data.get("context", data.get("ctx", {}))
 
-    if not session_id:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="sessionId is required"
-        )
-
+    # More flexible validation - generate a session ID if not provided
     if not user_input:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
