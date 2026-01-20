@@ -11,7 +11,7 @@ from utils.intent_detector import get_intent_detector
 from utils.question_generator import get_question_generator
 from utils.ambiguous_pattern_matcher import get_ambiguous_pattern_matcher
 from utils.vague_term_detector import get_vague_term_detector
-from database import get_session
+from ..database import get_session
 from src.services.task_intelligence_service import task_intelligence_service
 
 
