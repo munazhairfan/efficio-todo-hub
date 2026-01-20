@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from api.models.conversation_state import (
     ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
 )
-from src.services.conversation_service import ConversationService
+from services.conversation_service import ConversationService
 from utils.intent_detector import get_intent_detector
 from utils.question_generator import get_question_generator
 from utils.ambiguous_pattern_matcher import get_ambiguous_pattern_matcher
