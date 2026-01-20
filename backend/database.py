@@ -1,28 +1,37 @@
 from sqlmodel import create_engine, Session
 from typing import Generator
+import sys
+import os
+
+# Add the backend directory to the Python path to allow absolute imports
+backend_dir = os.path.dirname(os.path.abspath(__file__))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
 try:
-    # Try relative import when running as part of the package
-    from .src.core.config import settings
-    from .src.models.user import User
-    from .api.models.conversation_state import ConversationState
-    from .api.models.error_context import ErrorContext
+    # Try absolute import from the backend directory
+    from src.core.config import settings
+    from src.models.user import User
+    from api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
+    from api.models.error_context import ErrorContext
 except ImportError:
-    # Fallback to absolute import when needed
+    # Fallback to relative import when running as part of the package
     try:
-        # For when this is run from the parent directory where backend is a subdirectory
-        from backend.src.core.config import settings
-        from backend.src.models.user import User
-        from backend.api.models.conversation_state import ConversationState
-        from backend.api.models.error_context import ErrorContext
+        from .src.core.config import settings
+        from .src.models.user import User
+        from .api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
+        from .api.models.error_context import ErrorContext
     except ImportError:
-        # Last resort - import directly
-        import sys
-        import os
-        sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        from src.core.config import settings
-        from src.models.user import User
-        from api.models.conversation_state import ConversationState
-        from api.models.error_context import ErrorContext
+        # Last resort - try various import patterns
+        try:
+            # For when running from parent directory
+            from backend.src.core.config import settings
+            from backend.src.models.user import User
+            from backend.api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
+            from backend.api.models.error_context import ErrorContext
+        except ImportError:
+            print("Error: Could not import configuration modules")
+            raise
 
 
 # Create database engine lazily (only when needed)
