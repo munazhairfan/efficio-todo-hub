@@ -140,7 +140,10 @@ async def clarify_conversation(
     else:
         # Input is clear, but instead of just acknowledging, let's call the AI for a proper response
         # This handles general conversation that doesn't need task management
-        from src.services.openrouter_client import call_openrouter
+        try:
+            from src.services.openrouter_client import call_openrouter
+        except ImportError:
+            from services.openrouter_client import call_openrouter
 
         # Build conversation history for context
         # Since we don't have a direct way to get conversation history here, we'll use a simple approach

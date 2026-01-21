@@ -118,8 +118,7 @@ export default function FloatingChatButton() {
       {/* Chat Window - Only show when open */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 w-96 h-96 flex flex-col border rounded-lg shadow-xl bg-white">
-          {/* Chat Header */}
-          <Card className="flex-1 flex flex-col border-0 rounded-none rounded-t-lg">
+          <Card className="flex-1 flex flex-col h-full border-0 rounded-none">
             <CardHeader className="p-3 pb-2 flex-row items-center justify-between border-b">
               <CardTitle className="text-sm font-medium">Task Assistant</CardTitle>
               <Button
