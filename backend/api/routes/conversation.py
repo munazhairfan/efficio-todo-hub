@@ -21,6 +21,7 @@ except ImportError:
     from database import get_session
 
 from src.services.task_intelligence_service import task_intelligence_service
+from services.rate_limiter import rate_limiter
 
 
 router = APIRouter(prefix="/api/conversation", tags=["conversation"])
@@ -48,11 +49,24 @@ async def clarify_conversation(
             detail="input is required"
         )
 
+    # Extract user ID from context if available
+    user_id = context.get("user_id")
+    if not user_id:
+        # If no user ID provided, we can't apply rate limiting properly
+        # For now, we'll use a default/temporary ID, but in real implementation,
+        # this should require authentication
+        user_id = "temp_user"
+
+    # Check rate limit for authenticated user
+    is_allowed, error_msg = rate_limiter.is_allowed(str(user_id))
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=error_msg
+        )
+
     # Initialize services
     conv_service = ConversationService(session)
-
-    # Extract user ID from context if available, otherwise use a default
-    user_id = context.get("user_id", "temp_user")
 
     # First, try to process the user input through the task intelligence service
     # This handles task-related requests with specific logic

@@ -1,0 +1,200 @@
+openapi: 3.0.0
+info:
+  title: Rate Limiting API
+  version: 1.0.0
+  description: API for rate limiting chatbot requests
+
+paths:
+  /api/conversation/clarify:
+    post:
+      summary: Process chatbot conversation with rate limiting
+      description: |
+        Process user input for chatbot conversation with rate limiting applied.
+        If the authenticated user exceeds 10 requests per minute, a 429 error will be returned.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationRequest'
+      responses:
+        '200':
+          description: Conversation processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
+        '401':
+          description: Unauthorized - user not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Unprocessable entity - invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/chat:
+    post:
+      summary: Process chat message with rate limiting
+      description: |
+        Process user chat message with rate limiting applied.
+        If the authenticated user exceeds 10 requests per minute, a 429 error will be returned.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Chat message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitErrorResponse'
+        '401':
+          description: Unauthorized - user not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Unprocessable entity - invalid request format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ConversationRequest:
+      type: object
+      properties:
+        input:
+          type: string
+          description: User's input message
+          example: "What can you do for me?"
+        message:
+          type: string
+          description: Alternative field for user's input message
+          example: "Tell me about the weather"
+        text:
+          type: string
+          description: Alternative field for user's input message
+          example: "Add a task to buy groceries"
+        sessionId:
+          type: string
+          description: Session identifier for conversation context
+          example: "sess-12345"
+        context:
+          type: object
+          description: Additional context for the conversation
+          properties:
+            user_id:
+              type: string
+              description: User identifier
+              example: "user-123"
+      anyOf:
+        - required: ["input"]
+        - required: ["message"]
+        - required: ["text"]
+
+    ConversationResponse:
+      type: object
+      properties:
+        responseType:
+          type: string
+          enum: [success, clarification, error]
+          description: Type of response
+          example: "success"
+        message:
+          type: string
+          description: Text response to the user
+          example: "I have added the task 'buy groceries' to your list."
+        clarifyingQuestions:
+          type: array
+          items:
+            type: string
+          description: Questions to clarify user intent
+          example: ["To be clear: did you mean to buy groceries today or tomorrow?"]
+        suggestedActions:
+          type: array
+          items:
+            type: string
+          description: Suggested follow-up actions
+          example: ["Complete task #1", "Add deadline to task"]
+        conversationId:
+          type: string
+          description: Conversation identifier
+          nullable: true
+          example: "conv-12345"
+
+    ChatRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          description: User's chat message
+          example: "Hello, how are you?"
+        conversationId:
+          type: string
+          description: Identifier for the conversation
+          example: "conv-12345"
+
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          description: The chat response
+          example: "Hello! I'm doing well. How can I help you today?"
+        conversationId:
+          type: string
+          description: Identifier for the conversation
+          example: "conv-12345"
+
+    RateLimitErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "You're sending messages too fast. Please wait a moment."
+        retryAfter:
+          type: integer
+          description: Number of seconds to wait before retrying
+          example: 60
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Error details
+          example: "Invalid request format"

@@ -40,6 +40,10 @@ Specifications are organized in /specs:
 - Python 3.11, TypeScript/JavaScript (Node.js) + FastAPI, SQLModel, PostgreSQL, OpenRouter API, Next.js, Jest, pytest (001-testing-validation)
 - PostgreSQL (Neon) database with real persistence (001-testing-validation)
 - Python 3.11, TypeScript/JavaScript (Node.js) + FastAPI, SQLModel, PostgreSQL, OpenRouter API, Next.js, Tailwind CSS (001-single-assistant-arch)
+- Python 3.11 + FastAPI, SQLModel, Pydantic, uvicorn (001-single-assistant-behavior)
+- PostgreSQL (via SQLModel/SQLAlchemy) (001-single-assistant-behavior)
+- Python 3.11 + FastAPI, SQLModel, Pydantic, uvicorn, redis-py (for distributed rate limiting if needed) (001-chatbot-rate-limit)
+- In-memory storage with optional Redis for distributed systems (existing PostgreSQL for user authentication) (001-chatbot-rate-limit)
 
 ## Recent Changes
 - 002-user-auth: Added TypeScript (Frontend), Python 3.11 (Backend) + Better Auth (Frontend), FastAPI, SQLModel, PyJWT (Backend)
