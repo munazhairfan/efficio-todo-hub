@@ -9,7 +9,24 @@ import os
 import httpx
 import logging
 from typing import List, Dict, Any, Optional
-from src.core.config import settings
+
+# Try different import paths for different environments
+try:
+    from src.core.config import settings
+except ImportError:
+    try:
+        from core.config import settings
+    except ImportError:
+        try:
+            from api.core.config import settings
+        except ImportError:
+            # Create a mock settings object with default values for Hugging Face environment
+            class MockSettings:
+                secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+                algorithm = os.getenv("ALGORITHM", "HS256")
+                access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+
+            settings = MockSettings()
 
 
 logger = logging.getLogger(__name__)
