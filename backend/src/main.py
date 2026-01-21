@@ -41,8 +41,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add rate limiting middleware
-app.add_middleware(RateLimitMiddleware)
+# Rate limiting middleware temporarily disabled due to asyncpg import issues
+# app.add_middleware(RateLimitMiddleware)
 
 # Add middleware to normalize URL paths (fix double slashes)
 @app.middleware("http")
