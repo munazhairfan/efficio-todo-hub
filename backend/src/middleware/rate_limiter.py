@@ -83,6 +83,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             should_limit = False
             request_path = str(request.url.path)
 
+            # Explicitly exclude conversation endpoints from rate limiting
+            if "/api/conversation/" in request_path:
+                # Skip rate limiting for conversation endpoints
+                response = await call_next(request)
+                return response
+
             for pattern in self.endpoint_patterns:
                 # Simple string-based pattern matching that's safer
                 # Replace {user_id} with a placeholder and check if the path matches
