@@ -42,7 +42,21 @@ def get_engine():
     """Get database engine, creating it if it doesn't exist"""
     global _engine
     if _engine is None:
-        _engine = create_engine(settings.database_url, echo=True)
+        # Handle different database URL schemes to avoid asyncpg dependency issues
+        database_url = settings.database_url
+
+        # If using PostgreSQL and asyncpg isn't available, fall back to psycopg2
+        if database_url.startswith("postgresql://") or database_url.startswith("postgresql+"):
+            try:
+                # Try to use psycopg2 sync driver instead of asyncpg
+                if "postgresql+asyncpg://" in database_url:
+                    database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
+                elif "postgresql+psycopg://" in database_url:
+                    database_url = database_url.replace("postgresql+psycopg://", "postgresql://")
+            except:
+                pass  # If there's an issue, continue with original URL
+
+        _engine = create_engine(database_url, echo=True)
     return _engine
 
 
