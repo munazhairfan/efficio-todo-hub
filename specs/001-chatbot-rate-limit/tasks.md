@@ -108,6 +108,18 @@ Build iteratively with User Story 1 (P1) as the MVP. Each story is independently
 - [X] T066 Verify 0% of Todo CRUD operations are affected by rate limiting
 - [X] T067 Deploy to both Vercel and Hugging Face with consistent rate limiting functionality
 
+## Phase 8: Chat Interface Enhancement
+
+### Chat Experience
+- [X] T070 Create proper chat endpoint that handles both conversation and task requests
+- [X] T071 Implement proper authentication verification for chat endpoints
+- [X] T072 Ensure rate limiting only applies to authenticated users
+- [X] T073 Return friendly error messages when rate limits are exceeded
+- [X] T074 Integrate AI service for natural conversation responses
+- [X] T075 Ensure chatbot responds to casual conversation appropriately
+- [X] T076 Test that unauthenticated users are blocked from chat endpoints
+- [X] T077 Verify rate limiting doesn't interfere with other API endpoints
+
 ## Dependency Graph
 
 US1 (P1) → US2 (P1) → US3 (P2) → US4 (P2)

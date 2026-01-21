@@ -126,20 +126,20 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
 
                     # Make a second API call with the tool results
                     payload["messages"] = updated_messages
-                    response = client.post(
+                    second_response = client.post(
                         "https://openrouter.ai/api/v1/chat/completions",
                         json=payload,
                         headers=headers
                     )
 
-                    response.raise_for_status()
-                    data = response.json()
+                    second_response.raise_for_status()
+                    second_data = second_response.json()
 
-                    if "choices" in data and len(data["choices"]) > 0:
-                        content = data["choices"][0]["message"]["content"]
+                    if "choices" in second_data and len(second_data["choices"]) > 0:
+                        content = second_data["choices"][0]["message"]["content"]
                         return content.strip() if content else ""
                     else:
-                        logger.error(f"No choices found in OpenRouter response: {data}")
+                        logger.error(f"No choices found in OpenRouter response: {second_data}")
                         return "I'm having trouble responding right now. Please try again."
                 else:
                     # No tool calls, return the content directly

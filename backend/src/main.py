@@ -59,6 +59,13 @@ async def normalize_url_middleware(request, call_next):
 # Include API routes
 app.include_router(chat_router)
 
+# Import and include API chat routes
+try:
+    from api.routes.chat import router as api_chat_router
+    app.include_router(api_chat_router)
+except ImportError:
+    print("Could not import API chat router - this may be expected depending on the deployment environment")
+
 # Directly add the conversation clarify endpoint to ensure it's available
 @app.post("/api/conversation/clarify", response_model=Dict[str, Any])
 async def clarify_conversation_direct(

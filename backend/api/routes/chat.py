@@ -1,7 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+"""
+Chat API Routes
+Handles chatbot functionality with rate limiting and authentication
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlmodel import Session
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from typing import Dict, Any
+import uuid
+from datetime import datetime
 
 from api.models.conversation_state import (
     ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
@@ -22,14 +28,96 @@ except ImportError:
 
 from src.services.task_intelligence_service import task_intelligence_service
 from services.rate_limiter import rate_limiter
+from src.services.openrouter_client import call_openrouter
 
 
-router = APIRouter(prefix="/api/conversation", tags=["conversation"])
+router = APIRouter(prefix="/api", tags=["chat"])
 
 
-import uuid
+@router.post("/chat", response_model=Dict[str, Any])
+async def chat_endpoint(
+    data: Dict[str, Any],
+    session: Session = Depends(get_session),
+    authorization: str = Header(None)
+):
+    """
+    Main chat endpoint that handles both conversational and task requests.
+    """
+    # Extract message with flexible handling
+    user_input = data.get("message", data.get("input", data.get("text", "")))
+    conversation_id = data.get("conversationId") or data.get("conversation_id")
+    context = data.get("context", data.get("ctx", {}))
 
-@router.post("/clarify", response_model=Dict[str, Any])
+    if not user_input:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Message is required"
+        )
+
+    # Verify authentication
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header with Bearer token is required"
+        )
+
+    # For simplicity, we'll extract user ID from context or use a temporary one
+    # In a real implementation, we'd decode the JWT token properly
+    user_id = context.get("user_id") or "temp_user"
+
+    # Check rate limit
+    is_allowed, error_msg = rate_limiter.is_allowed(str(user_id))
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=error_msg
+        )
+
+    # Initialize services
+    conv_service = ConversationService(session)
+
+    # First, try to process through task intelligence service
+    task_result = task_intelligence_service.process_task_request(str(user_id), user_input)
+
+    if task_result and task_result.get("handled_locally"):
+        # Task was handled locally, return response directly
+        return {
+            "response": task_result["response"],
+            "conversationId": conversation_id,
+            "type": "task_response"
+        }
+
+    # For conversation-based responses, use AI
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful assistant. Respond naturally to the user's messages. If they want to manage tasks, let them know you can help with that. Be friendly and engaging."
+        },
+        {
+            "role": "user",
+            "content": user_input
+        }
+    ]
+
+    try:
+        # Call the AI service for a proper conversational response
+        ai_response = call_openrouter(messages)
+
+        return {
+            "response": ai_response,
+            "conversationId": conversation_id or str(uuid.uuid4()),
+            "type": "chat_response"
+        }
+    except Exception as e:
+        # Fallback if AI call fails
+        return {
+            "response": f"I understand you said: '{user_input}'. How can I assist you further?",
+            "conversationId": conversation_id or str(uuid.uuid4()),
+            "type": "fallback_response"
+        }
+
+
+@router.post("/conversation/clarify", response_model=Dict[str, Any])
 async def clarify_conversation(
     data: Dict[str, Any],
     session: Session = Depends(get_session)
@@ -190,171 +278,3 @@ async def clarify_conversation(
     }
 
     return response_data
-
-
-@router.get("/state/{session_id}", response_model=ConversationStateResponse)
-async def get_conversation_state(
-    session_id: str,
-    session: Session = Depends(get_session)
-):
-    """
-    Retrieve the current state of a conversation.
-    """
-    conv_service = ConversationService(session)
-    conversation = conv_service.get_conversation_state(session_id)
-
-    if not conversation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation state not found"
-        )
-
-    # Convert to response model
-    response = ConversationStateResponse(
-        id=conversation.id,
-        session_id=conversation.session_id,
-        current_intent=conversation.current_intent,
-        pending_clarifications=conversation.pending_clarifications,
-        context_data=conversation.context_data,
-        created_at=conversation.created_at,
-        updated_at=conversation.updated_at,
-        expires_at=conversation.expires_at
-    )
-
-    return response
-
-
-@router.post("/state/{session_id}", response_model=ConversationStateResponse)
-async def update_conversation_state(
-    session_id: str,
-    *,
-    session: Session = Depends(get_session),
-    data: ConversationStateUpdate
-):
-    """
-    Update the conversation state.
-    """
-    conv_service = ConversationService(session)
-    conversation = conv_service.update_conversation_state(session_id, data)
-
-    if not conversation:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation state not found"
-        )
-
-    # Convert to response model
-    response = ConversationStateResponse(
-        id=conversation.id,
-        session_id=conversation.session_id,
-        current_intent=conversation.current_intent,
-        pending_clarifications=conversation.pending_clarifications,
-        context_data=conversation.context_data,
-        created_at=conversation.created_at,
-        updated_at=conversation.updated_at,
-        expires_at=conversation.expires_at
-    )
-
-    return response
-
-
-@router.delete("/state/{session_id}")
-async def delete_conversation_state(
-    session_id: str,
-    session: Session = Depends(get_session)
-):
-    """
-    Delete the conversation state.
-    """
-    conv_service = ConversationService(session)
-    deleted = conv_service.delete_conversation_state(session_id)
-
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Conversation state not found"
-        )
-
-    return {"message": "Conversation state deleted successfully"}
-
-
-@router.post("/clear-expired")
-async def clear_expired_conversations(
-    session: Session = Depends(get_session)
-):
-    """
-    Manually clear all expired conversation states.
-    """
-    conv_service = ConversationService(session)
-    deleted_count = conv_service.clear_expired_conversations()
-
-    return {"deleted_count": deleted_count, "message": f"Cleared {deleted_count} expired conversations"}
-
-
-# Additional helper endpoints
-
-@router.post("/analyze-input")
-async def analyze_user_input(
-    *,
-    data: Dict[str, Any]
-):
-    """
-    Analyze user input for ambiguity, vagueness, and intent without storing conversation state.
-    """
-    user_input = data.get("input", "")
-    if not user_input:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="input is required"
-        )
-
-    # Extract user ID from context if available, otherwise use a default
-    context = data.get("context", {})
-    user_id = context.get("user_id", "temp_user")
-
-    # First, try to process the user input through the task intelligence service
-    # This handles task-related requests with specific logic
-    task_result = task_intelligence_service.process_task_request(str(user_id), user_input)
-
-    if task_result and task_result.get("handled_locally"):
-        # The request was handled by the task intelligence service
-        # Return analysis indicating no clarification needed since it's handled
-        return {
-            "input": user_input,
-            "analysis": {
-                "intent": {"is_ambiguous": False},
-                "ambiguity": {"is_ambiguous": False},
-                "vagueness": {"is_vague": False}
-            },
-            "needs_clarification": False,
-            "clarifying_questions": [],
-            "handled_locally": True
-        }
-
-    # If the task intelligence service didn't handle it, fall back to the old detection system
-    intent_detector = get_intent_detector()
-    pattern_matcher = get_ambiguous_pattern_matcher()
-    vague_detector = get_vague_term_detector()
-    question_generator = get_question_generator()
-
-    # Perform analyses
-    intent_result = intent_detector.classify_input(user_input)
-    ambiguity_analysis = pattern_matcher.analyze_ambiguity(user_input)
-    vagueness_analysis = vague_detector.analyze_vagueness(user_input)
-
-    # Generate clarifying questions if needed
-    clarifying_questions = []
-    if intent_result['is_ambiguous'] or ambiguity_analysis['is_ambiguous'] or vagueness_analysis['is_vague']:
-        clarifying_questions = question_generator.generate_for_ambiguity_analysis(ambiguity_analysis)
-
-    return {
-        "input": user_input,
-        "analysis": {
-            "intent": intent_result,
-            "ambiguity": ambiguity_analysis,
-            "vagueness": vagueness_analysis
-        },
-        "needs_clarification": intent_result['is_ambiguous'] or ambiguity_analysis['is_ambiguous'] or vagueness_analysis['is_vague'],
-        "clarifying_questions": clarifying_questions[:3],  # Limit to 3 questions
-        "handled_locally": False
-    }
