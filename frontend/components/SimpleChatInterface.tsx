@@ -148,7 +148,7 @@ export default function SimpleChatInterface() {
       // Only make the API call if user is authenticated
       if (!isAuthenticated) {
         // For non-task related and non-general questions when not authenticated, suggest logging in
-        const assistantMessage = {
+        const assistantMessage: Message = {
           id: Date.now() + 1,
           type: 'assistant',
           content: `Thanks for your message! For general questions about the app, I can help even without logging in. For task management (adding, completing, deleting tasks), please sign in to your account first.`
