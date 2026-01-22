@@ -150,46 +150,14 @@ export default function SimpleChatInterface() {
           const assistantMessage: Message = {
             id: Date.now() + 1,
             type: 'assistant',
-            content: `I'd be happy to help! For general questions about the app, I can assist even without logging in. For task management (adding, completing, deleting tasks), please sign in to your account. In the meantime, I'll do my best to answer your question: For task management features, please log in first.`
+            content: `I'd be happy to help! For general questions about the app, I can assist even without logging in. For task management (adding, completing, deleting tasks), please sign in to your account. In the meantime, I'll do my best to answer your question.`
           };
 
           setMessages(prev => [...prev, assistantMessage]);
-          // Continue with API call to see if backend can help
         }
-      } else {
-        // User is authenticated, proceed with the API call for task management
-        const response = await fetch('/api/conversation/clarify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            input: inputValue.trim(),
-            context: {
-              user_id: user?.id || localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user'
-            }
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || `API error: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Add assistant response
-        const assistantMessage: Message = {
-          id: Date.now() + 1,
-          type: 'assistant',
-          content: data.message || data.response || 'I received your message.'
-        };
-
-        setMessages(prev => [...prev, assistantMessage]);
       }
 
-      // In both cases (authenticated or not), make the API call to get a response
+      // Make the API call to get a response (either authenticated or unauthenticated)
       const apiCallHeaders: Record<string, string> = {
         'Content-Type': 'application/json',
       };
@@ -211,7 +179,7 @@ export default function SimpleChatInterface() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({})); // Catch potential JSON parsing errors
         throw new Error(errorData.detail || `API error: ${response.status}`);
       }
 
