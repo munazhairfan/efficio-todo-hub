@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/components/auth/AuthProvider';
+import FloatingChatButton from '@/src/components/FloatingChatButton';
 import '../styles/globals.css';
 
 const geist = Inter({ subsets: ["latin"] });
@@ -28,6 +29,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
+            <FloatingChatButton />
             <Analytics />
           </AuthProvider>
         </ThemeProvider>
