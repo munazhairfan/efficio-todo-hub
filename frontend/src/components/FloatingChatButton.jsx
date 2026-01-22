@@ -1,19 +1,65 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, MessageCircle, X } from 'lucide-react';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function FloatingChatButton() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { id: 1, type: 'assistant', content: 'Hello! I\'m your task management assistant. How can I help you today?' }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const [conversationId, setConversationId] = useState(null);
+
+  // Load conversation from localStorage when component mounts
+  useEffect(() => {
+    const loadConversation = () => {
+      if (!user?.id) return;
+
+      try {
+        const savedConversations = localStorage.getItem(`chat_conversation_${user.id}`);
+        if (savedConversations) {
+          const parsed = JSON.parse(savedConversations);
+          setMessages(parsed.messages || []);
+          setConversationId(parsed.conversationId || null);
+        } else {
+          // Initialize with welcome message if no saved conversation
+          setMessages([
+            { id: 1, type: 'assistant', content: 'Hello! I\'m your task management assistant. How can I help you today?' }
+          ]);
+        }
+      } catch (error) {
+        console.error('Failed to load conversation:', error);
+        // Initialize with welcome message on error
+        setMessages([
+          { id: 1, type: 'assistant', content: 'Hello! I\'m your task management assistant. How can I help you today?' }
+        ]);
+      }
+    };
+
+    loadConversation();
+  }, [user?.id]);
+
+  // Save conversation to localStorage whenever messages change
+  useEffect(() => {
+    if (!user?.id || messages.length === 0) return;
+
+    try {
+      const conversationData = {
+        messages,
+        conversationId,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(`chat_conversation_${user.id}`, JSON.stringify(conversationData));
+    } catch (error) {
+      console.error('Failed to save conversation:', error);
+    }
+  }, [messages, user?.id, conversationId]);
 
   // Toggle chat window
   const toggleChat = () => {
@@ -23,6 +69,21 @@ export default function FloatingChatButton() {
   // Close chat window
   const closeChat = () => {
     setIsOpen(false);
+  };
+
+  // Clear conversation history
+  const clearConversation = () => {
+    if (user?.id) {
+      try {
+        localStorage.removeItem(`chat_conversation_${user.id}`);
+        setMessages([
+          { id: 1, type: 'assistant', content: 'Hello! I\'m your task management assistant. How can I help you today?' }
+        ]);
+        setConversationId(null);
+      } catch (error) {
+        console.error('Failed to clear conversation:', error);
+      }
+    }
   };
 
   // Handle sending a message
@@ -41,11 +102,74 @@ export default function FloatingChatButton() {
     setIsLoading(true);
 
     try {
-      // Get the JWT token from localStorage
-      const token = localStorage.getItem('auth_token');
+      // Check if user is authenticated
+      const token = localStorage.getItem('authToken');
+      const isAuthenticated = token && user?.id;
 
-      if (!token) {
-        throw new Error('You must be logged in to use the chatbot');
+      // Check if this is a task-related request that requires authentication
+      const taskRelatedKeywords = [
+        'add task', 'create task', 'new task', 'complete task', 'finish task',
+        'delete task', 'remove task', 'update task', 'edit task', 'list task',
+        'my tasks', 'show tasks', 'task list', 'todo', 'to-do', 'todos'
+      ];
+
+      const isTaskRelated = taskRelatedKeywords.some(keyword =>
+        inputValue.toLowerCase().includes(keyword.toLowerCase())
+      );
+
+      if (isTaskRelated && !isAuthenticated) {
+        // For task-related requests without authentication, provide helpful response
+        const assistantMessage = {
+          id: Date.now() + 1,
+          type: 'assistant',
+          content: `I'd be happy to help you manage your tasks! However, you'll need to sign in first to access your personal task list. Please log in to your account, and then I can help you add, complete, delete, or manage your tasks. In the meantime, I can answer questions about how the app works!`
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsLoading(false);
+        return;
+      }
+
+      // For non-task related questions, allow unauthenticated users to ask general questions
+      if (!isAuthenticated) {
+        // Check if it's a general question about the app
+        const generalInfoKeywords = [
+          'how does this work', 'how to use', 'what can you do', 'features',
+          'help', 'instructions', 'guide', 'tutorial', 'explain', 'about',
+          'what is this', 'how to', 'can you help', 'what can i do'
+        ];
+
+        const isGeneralInfoQuery = generalInfoKeywords.some(keyword =>
+          inputValue.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+        if (isGeneralInfoQuery) {
+          // Provide helpful information about the app for guests
+          let infoResponse = '';
+
+          if (inputValue.toLowerCase().includes('work') || inputValue.toLowerCase().includes('use') || inputValue.toLowerCase().includes('how')) {
+            infoResponse = `Our todo app helps you manage your tasks efficiently! You can add, complete, update, and delete tasks. I can assist you with managing your personal task list through our chat interface. To get started with task management, simply sign up or log in to your account. Until then, I can answer general questions about the app's features.`;
+          } else if (inputValue.toLowerCase().includes('features') || inputValue.toLowerCase().includes('what can you')) {
+            infoResponse = `I can help you manage your tasks in several ways:\n• Add new tasks to your list\n• List your current tasks\n• Mark tasks as completed\n• Update or edit existing tasks\n• Delete tasks you no longer need\n\nTo use these features, please sign in to your account. For general questions, I'm happy to help even without logging in!`;
+          } else {
+            infoResponse = `Welcome! Our app helps you manage your tasks and stay organized. You can interact with me to manage your personal task list. To access your tasks, please sign in to your account. In the meantime, I'm happy to answer any questions you have about how the app works!`;
+          }
+
+          const assistantMessage = {
+            id: Date.now() + 1,
+            type: 'assistant',
+            content: infoResponse
+          };
+
+          setMessages(prev => [...prev, assistantMessage]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // If user is authenticated, proceed with the API call
+      if (!token || !user?.id) {
+        throw new Error('You must be logged in to use the chatbot for task management');
       }
 
       // Call the backend API
@@ -58,7 +182,8 @@ export default function FloatingChatButton() {
         body: JSON.stringify({
           input: inputValue.trim(),
           context: {
-            user_id: localStorage.getItem('user_id') || 'temp_user'
+            user_id: user?.id || localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user',
+            conversation_id: conversationId || undefined
           }
         })
       });
@@ -69,6 +194,11 @@ export default function FloatingChatButton() {
       }
 
       const data = await response.json();
+
+      // Update conversation ID if provided in response
+      if (data.conversationId || data.conversation_id) {
+        setConversationId(data.conversationId || data.conversation_id);
+      }
 
       // Add assistant response
       const assistantMessage = {
@@ -121,15 +251,32 @@ export default function FloatingChatButton() {
           <Card className="flex-1 flex flex-col h-full border-0 rounded-none">
             <CardHeader className="p-3 pb-2 flex-row items-center justify-between border-b">
               <CardTitle className="text-sm font-medium">Task Assistant</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closeChat}
-                className="h-8 w-8 p-0"
-                aria-label="Close chat"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex space-x-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearConversation}
+                  className="h-8 w-8 p-0"
+                  aria-label="Clear chat history"
+                  title="Clear chat history"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={closeChat}
+                  className="h-8 w-8 p-0"
+                  aria-label="Close chat"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </CardHeader>
 
             <CardContent className="flex-1 p-0 flex flex-col h-[calc(100%-130px)]">
