@@ -16,6 +16,7 @@ import { Plus, Edit, Trash2, LogOut, MessageSquare, Send } from 'lucide-react';
 import ErrorHandler from '@/components/ErrorHandler';
 import ConfirmationDialog, { useConfirmationDialog } from '@/components/ConfirmationDialog';
 import ChatInterface from '@/components/ChatInterface';
+import SimpleChatInterface from '@/components/SimpleChatInterface';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated, signout } = useAuth();
@@ -216,9 +217,9 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Assistant functionality now available via floating chat button */}
-        <div className="mb-8 p-4 text-center bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 font-medium">💬 Need help? Use the floating chat button in the bottom-right corner to talk to your task assistant!</p>
+        {/* Visible Task Assistant Chat Interface */}
+        <div className="mb-8">
+          <SimpleChatInterface />
         </div>
 
         {/* Traditional Add Todo Form */}
