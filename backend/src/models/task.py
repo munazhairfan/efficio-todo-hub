@@ -12,7 +12,7 @@ class Task(BaseModel):
     """
     __tablename__ = "tasks"
 
-    user_id = Column(Integer, nullable=False, index=True)  # Foreign key to users table
+    user_id = Column(String, nullable=False, index=True)  # Foreign key to users table
     title = Column(String, nullable=False)  # Title of the task
     description = Column(Text, nullable=True)  # Detailed description of the task
     completed = Column(Boolean, default=False, nullable=False)  # Whether the task is completed or not
@@ -29,7 +29,7 @@ from typing import Optional
 
 
 class TaskCreate(PydanticBaseModel):
-    user_id: int
+    user_id: str
     title: str
     description: Optional[str] = None
     completed: Optional[bool] = False
@@ -49,7 +49,7 @@ class TaskUpdate(PydanticBaseModel):
 
 class TaskResponse(PydanticBaseModel):
     id: int
-    user_id: int
+    user_id: str
     title: str
     description: Optional[str] = None
     completed: bool

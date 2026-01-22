@@ -6,6 +6,7 @@ from database import get_engine
 from api.models.conversation_state import ConversationState
 from api.models.error_context import ErrorContext
 from src.models.user import User
+from src.models.task import Task
 from sqlmodel import SQLModel
 
 

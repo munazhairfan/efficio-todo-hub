@@ -27,6 +27,7 @@ if config.config_file_name is not None:
 from src.database.session import Base
 from src.models.conversation import Conversation
 from src.models.message import Message
+from src.models.task import Task
 
 # add your model's MetaData object here
 # for 'autogenerate' support
