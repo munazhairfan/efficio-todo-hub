@@ -23,10 +23,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState(''); // For traditional form
-  const [assistantInput, setAssistantInput] = useState(''); // For assistant input
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState(''); // General error
-  const [assistantError, setAssistantError] = useState(''); // Assistant-specific error
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -91,7 +89,6 @@ export default function DashboardPage() {
       });
       setTodos([response, ...todos]);
       setNewTodo('');
-      setAssistantInput(''); // Clear assistant input too to avoid confusion
     } catch (err) {
       setError('Failed to create todo');
       console.error('Error creating todo:', err);
@@ -164,89 +161,6 @@ export default function DashboardPage() {
     }
   };
 
-  const processUserInput = async (input: string, context: Record<string, any> = {}) => {
-    setIsProcessing(true);
-    setAssistantError(''); // Clear any previous assistant errors
-    try {
-      // Include user ID in context for the task intelligence service
-      const contextWithUser = {
-        ...context,
-        user_id: user?.id || 'unknown'
-      };
-
-      const response = await conversationApi.clarify(sessionId, input, contextWithUser);
-
-      if (response.responseType === 'clarification') {
-        // Show clarification dialog
-        setClarificationQuestions(response.clarifyingQuestions);
-        setCurrentClarificationContext({...context, originalInput: input});
-        setShowClarificationDialog(true);
-      } else if (response.responseType === 'error') {
-        setError(response.message);
-      } else {
-        // Handle the successful input - determine action based on the input
-        await executeActionFromInput(input);
-      }
-    } catch (err) {
-      console.error('Error processing user input:', err);
-      setAssistantError('Failed to process your request. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleClarificationAnswer = async (answer: string) => {
-    // Process the user's answer to the clarification question
-    await processUserInput(answer, {
-      ...currentClarificationContext,
-      clarificationAnswer: answer,
-      user_id: user?.id || 'unknown'
-    });
-  };
-
-  const executeActionFromInput = async (input: string) => {
-    // Simple parsing for demo purposes - in a real app, this would be more sophisticated
-    const inputLower = input.toLowerCase();
-
-    if (inputLower.includes('add') || inputLower.includes('create')) {
-      // Extract task title from input
-      const match = input.match(/(?:add|create)\s+(?:a\s+)?(.+)/i);
-      if (match) {
-        const taskTitle = match[1].trim();
-        if (taskTitle) {
-          try {
-            const response = await api.createTodo({
-              title: taskTitle,
-              description: '',
-              completed: false
-            });
-            setTodos([response, ...todos]);
-            setNewTodo(''); // For traditional form input
-            setAssistantInput(''); // For assistant input
-          } catch (err) {
-            setError('Failed to create todo');
-            console.error('Error creating todo:', err);
-          }
-        }
-      }
-    } else if (inputLower.includes('mark') || inputLower.includes('complete') || inputLower.includes('done')) {
-      // Find a task to mark as complete
-      const incompleteTodos = todos.filter(t => !t.completed);
-      if (incompleteTodos.length > 0) {
-        const todo = incompleteTodos[0]; // For demo, just pick the first incomplete
-        try {
-          const updatedTodo = await api.updateTodo(todo.id, {
-            ...todo,
-            completed: true
-          });
-          setTodos(todos.map(t => t.id === updatedTodo.id ? updatedTodo : t));
-        } catch (err) {
-          setError('Failed to update todo');
-          console.error('Error updating todo:', err);
-        }
-      }
-    }
-  };
 
   const completedCount = todos.filter(todo => todo.completed).length;
   const totalCount = todos.length;
@@ -303,80 +217,10 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Unified Assistant Interface */}
-        <Card className="border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl font-black text-merlot flex items-center gap-2">
-              <MessageSquare className="h-6 w-6" />
-              Assistant
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Input
-                value={assistantInput}
-                onChange={(e) => setAssistantInput(e.target.value)}
-                placeholder="Ask me anything - add tasks, update, delete, list, or just chat..."
-                className="h-12 border-2 border-merlot text-lg rounded-lg px-4"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (assistantInput.trim()) {
-                      processUserInput(assistantInput);
-                      setAssistantInput('');
-                    }
-                  }
-                }}
-              />
-              <Button
-                onClick={() => {
-                  if (assistantInput.trim()) {
-                    processUserInput(assistantInput);
-                    setAssistantInput('');
-                  }
-                }}
-                disabled={isProcessing || !assistantInput.trim()}
-                className="h-12 bg-mojo hover:bg-merlot text-white font-black text-lg border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all rounded-xl"
-              >
-                <Send className="mr-2 h-5 w-5" />
-                {isProcessing ? 'Processing...' : 'Send'}
-              </Button>
-            </div>
-            <p className="text-sm text-gray-600 mt-2">Examples: "Add a task to buy groceries", "Show my tasks", "Mark task #1 as complete", "Delete the laundry task", "How are you?"</p>
-          </CardContent>
-        </Card>
-
-        {/* Assistant Error Display */}
-        {assistantError && (
-          <Card className="border-4 border-red-500 shadow-[4px_4px_0px_0px_rgba(239,68,68,1)] rounded-xl mb-8">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-red-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-bold">Assistant Error:</span>
-                </div>
-                <button
-                  onClick={() => setAssistantError('')}
-                  className="text-red-700 hover:text-red-900"
-                  aria-label="Dismiss error"
-                >
-                  ×
-                </button>
-              </div>
-              <p className="text-red-600 ml-7">{assistantError}</p>
-              <div className="mt-2 ml-7 text-sm text-red-500">
-                <p>Suggestions:</p>
-                <ul className="list-disc pl-5 mt-1">
-                  <li>Check your internet connection</li>
-                  <li>Verify the assistant service is running</li>
-                  <li>Try again in a moment</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Assistant functionality now available via floating chat button */}
+        <div className="mb-8 p-4 text-center bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800 font-medium">💬 Need help? Use the floating chat button in the bottom-right corner to talk to your task assistant!</p>
+        </div>
 
         {/* Traditional Add Todo Form */}
         <Card className="border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl mb-8">
