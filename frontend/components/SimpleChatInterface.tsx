@@ -114,7 +114,8 @@ export default function SimpleChatInterface() {
         const generalInfoKeywords = [
           'how does this work', 'how to use', 'what can you do', 'features',
           'help', 'instructions', 'guide', 'tutorial', 'explain', 'about',
-          'what is this', 'how to', 'can you help', 'what can i do'
+          'what is this', 'how to', 'can you help', 'what can i do', 'what is',
+          'how does', 'tell me about', 'what do', 'what does', 'describe', 'what is adding'
         ];
 
         const isGeneralInfoQuery = generalInfoKeywords.some(keyword =>
@@ -129,6 +130,8 @@ export default function SimpleChatInterface() {
             infoResponse = `Our todo app helps you manage your tasks efficiently! You can add, complete, update, and delete tasks. I can assist you with managing your personal task list through our chat interface. To get started with task management, simply sign up or log in to your account. Until then, I can answer general questions about the app's features.`;
           } else if (inputValue.toLowerCase().includes('features') || inputValue.toLowerCase().includes('what can you')) {
             infoResponse = `I can help you manage your tasks in several ways:\n• Add new tasks to your list\n• List your current tasks\n• Mark tasks as completed\n• Update or edit existing tasks\n• Delete tasks you no longer need\n\nTo use these features, please sign in to your account. For general questions, I'm happy to help even without logging in!`;
+          } else if (inputValue.toLowerCase().includes('what is adding')) {
+            infoResponse = `Adding a task means creating a new item in your to-do list. For example, you can say "Add a task to buy groceries" or "Create a task to call John". When you're logged in, I can add these tasks to your personal list. Until you log in, I can answer questions about how the app works!`;
           } else {
             infoResponse = `Welcome! Our app helps you manage your tasks and stay organized. You can interact with me to manage your personal task list. To access your tasks, please sign in to your account. In the meantime, I'm happy to answer any questions you have about how the app works!`;
           }
@@ -142,34 +145,67 @@ export default function SimpleChatInterface() {
           setMessages(prev => [...prev, assistantMessage]);
           setIsLoading(false);
           return;
-        }
-      }
+        } else {
+          // For non-general questions when not authenticated, suggest logging in but still try to help
+          const assistantMessage: Message = {
+            id: Date.now() + 1,
+            type: 'assistant',
+            content: `I'd be happy to help! For general questions about the app, I can assist even without logging in. For task management (adding, completing, deleting tasks), please sign in to your account. In the meantime, I'll do my best to answer your question: For task management features, please log in first.`
+          };
 
-      // Only make the API call if user is authenticated
-      if (!isAuthenticated) {
-        // For non-task related and non-general questions when not authenticated, suggest logging in
+          setMessages(prev => [...prev, assistantMessage]);
+          // Continue with API call to see if backend can help
+        }
+      } else {
+        // User is authenticated, proceed with the API call for task management
+        const response = await fetch('/api/conversation/clarify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            input: inputValue.trim(),
+            context: {
+              user_id: user?.id || localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user'
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.detail || `API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Add assistant response
         const assistantMessage: Message = {
           id: Date.now() + 1,
           type: 'assistant',
-          content: `Thanks for your message! For general questions about the app, I can help even without logging in. For task management (adding, completing, deleting tasks), please sign in to your account first.`
+          content: data.message || data.response || 'I received your message.'
         };
 
         setMessages(prev => [...prev, assistantMessage]);
-        setIsLoading(false);
-        return;
       }
 
-      // User is authenticated, proceed with the API call for task management
+      // In both cases (authenticated or not), make the API call to get a response
+      const apiCallHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Only add authorization header if authenticated
+      if (isAuthenticated && token) {
+        apiCallHeaders['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/conversation/clarify', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: apiCallHeaders,
         body: JSON.stringify({
           input: inputValue.trim(),
           context: {
-            user_id: user?.id || localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user'
+            user_id: user?.id || localStorage.getItem('user_id') || localStorage.getItem('userId') || (isAuthenticated ? 'temp_user' : 'guest_user')
           }
         })
       });
