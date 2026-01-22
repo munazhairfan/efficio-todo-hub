@@ -145,12 +145,21 @@ export default function SimpleChatInterface() {
         }
       }
 
-      // If user is authenticated, proceed with the API call
-      if (!token || !user?.id) {
-        throw new Error('You must be logged in to use the chatbot for task management');
+      // Only make the API call if user is authenticated
+      if (!isAuthenticated) {
+        // For non-task related and non-general questions when not authenticated, suggest logging in
+        const assistantMessage = {
+          id: Date.now() + 1,
+          type: 'assistant',
+          content: `Thanks for your message! For general questions about the app, I can help even without logging in. For task management (adding, completing, deleting tasks), please sign in to your account first.`
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsLoading(false);
+        return;
       }
 
-      // Call the backend API
+      // User is authenticated, proceed with the API call for task management
       const response = await fetch('/api/conversation/clarify', {
         method: 'POST',
         headers: {
