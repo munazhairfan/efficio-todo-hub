@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, LogOut, MessageSquare, Send } from 'lucide-react';
-import ClarificationDialog from '@/components/ClarificationDialog';
 import ErrorHandler from '@/components/ErrorHandler';
 import ConfirmationDialog, { useConfirmationDialog } from '@/components/ConfirmationDialog';
 import ChatInterface from '@/components/ChatInterface';
@@ -367,14 +366,6 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* Clarification Dialog */}
-      <ClarificationDialog
-        isOpen={showClarificationDialog}
-        onClose={() => setShowClarificationDialog(false)}
-        questions={clarificationQuestions}
-        onSubmit={handleClarificationAnswer}
-        title="Need Clarification"
-      />
 
       {/* Confirmation Dialog */}
       {ConfirmationDlg}
