@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from sqlmodel import Session, select
 from api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate
@@ -10,8 +10,8 @@ class ConversationService:
 
     def create_conversation_state(self, conversation_data: ConversationStateCreate) -> ConversationState:
         """Create a new conversation state"""
-        # Set expiration time (e.g., 1 hour from creation)
-        expires_at = datetime.utcnow() + timedelta(hours=1)
+        # Set expiration time (e.g., 1 hour from creation) - use timezone-aware datetime
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
 
         conversation_state = ConversationState(
             session_id=conversation_data.session_id,
@@ -33,7 +33,7 @@ class ConversationService:
         conversation = self.session.exec(statement).first()
 
         # Check if conversation has expired
-        if conversation and conversation.expires_at < datetime.utcnow():
+        if conversation and conversation.expires_at < datetime.now(timezone.utc):
             self.delete_conversation_state(session_id)
             return None
 
@@ -55,7 +55,7 @@ class ConversationService:
         if update_data.expires_at is not None:
             conversation.expires_at = update_data.expires_at
 
-        conversation.updated_at = datetime.utcnow()
+        conversation.updated_at = datetime.now(timezone.utc)
 
         self.session.add(conversation)
         self.session.commit()
@@ -75,7 +75,7 @@ class ConversationService:
 
     def clear_expired_conversations(self) -> int:
         """Remove all expired conversation states and return count of deleted items"""
-        statement = select(ConversationState).where(ConversationState.expires_at < datetime.utcnow())
+        statement = select(ConversationState).where(ConversationState.expires_at < datetime.now(timezone.utc))
         expired_conversations = self.session.exec(statement).all()
 
         count = 0
@@ -95,7 +95,7 @@ class ConversationService:
         if clarification not in conversation.pending_clarifications:
             conversation.pending_clarifications.append(clarification)
 
-        conversation.updated_at = datetime.utcnow()
+        conversation.updated_at = datetime.now(timezone.utc)
         self.session.add(conversation)
         self.session.commit()
         self.session.refresh(conversation)
@@ -111,7 +111,7 @@ class ConversationService:
         if clarification in conversation.pending_clarifications:
             conversation.pending_clarifications.remove(clarification)
 
-        conversation.updated_at = datetime.utcnow()
+        conversation.updated_at = datetime.now(timezone.utc)
         self.session.add(conversation)
         self.session.commit()
         self.session.refresh(conversation)
@@ -121,6 +121,6 @@ class ConversationService:
     def get_active_conversation_state(self, session_id: str) -> Optional[ConversationState]:
         """Get conversation state only if it's not expired"""
         conversation = self.get_conversation_state(session_id)
-        if conversation and conversation.expires_at >= datetime.utcnow():
+        if conversation and conversation.expires_at >= datetime.now(timezone.utc):
             return conversation
         return None
