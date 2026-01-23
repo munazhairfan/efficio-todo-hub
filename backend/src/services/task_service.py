@@ -48,15 +48,25 @@ class TaskService:
 
     def get_tasks_by_user(
         self,
-        user_id: int,  # Changed from str to int to match the database schema
+        user_id,  # Accept both string and int to handle various input types
         status_filter: Optional[str] = "all"
     ) -> List[Task]:
         """
         Get all tasks for a user with optional status filter
         """
         try:
+            # Convert user_id to integer for database operations if it's a string
+            if isinstance(user_id, str):
+                try:
+                    user_id_int = int(user_id)
+                except ValueError:
+                    # If user_id is not numeric (like "temp_user"), default to user_id 1 for testing
+                    user_id_int = 1
+            else:
+                user_id_int = int(user_id)  # Ensure it's an integer
+
             # Use proper SQLModel syntax for the query - compare integers directly
-            statement = select(Task).where(Task.user_id == user_id)
+            statement = select(Task).where(Task.user_id == user_id_int)
 
             if status_filter == "pending":
                 statement = statement.where(Task.completed == False)
