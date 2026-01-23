@@ -34,7 +34,11 @@ app.include_router(users.router)
 @app.on_event("startup")
 def on_startup():
     engine = get_engine()
-    SQLModel.metadata.create_all(engine)
+    # Create tables for SQLAlchemy models (using declarative base from session)
+    from src.database.session import Base as SQLAlchemyBase
+    SQLAlchemyBase.metadata.create_all(bind=engine)
+    # Create tables for SQLModel models
+    SQLModel.metadata.create_all(bind=engine)
 
 # Removed blocking database initialization from startup to prevent hanging
 # Database tables will be created when first accessed
