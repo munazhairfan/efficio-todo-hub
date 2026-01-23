@@ -11,7 +11,7 @@ class Task(SQLModel, table=True):
     """
     Represents a single item in a user's to-do list, containing id, title, description, status, and user association
     """
-    __tablename__ = "tasks"
+    __tablename__ = "todos"  # Use 'todos' table name to match existing database schema
 
     id: Optional[int] = Field(default=None, sa_column=Column(Integer, primary_key=True, index=True))
     user_id: str = Field(sa_column=Column(String, nullable=False, index=True))  # Foreign key to users table
