@@ -186,7 +186,7 @@ export default function SimpleChatInterface() {
         body: JSON.stringify({
           input: inputValue.trim(),
           context: {
-            user_id: user?.id || (isAuthenticated ? 'temp_user' : 'guest_user')
+            user_id: user?.id || (isAuthenticated ? (localStorage.getItem('user_id') || localStorage.getItem('userId') || 'guest_user') : 'guest_user')
           }
         })
       });
