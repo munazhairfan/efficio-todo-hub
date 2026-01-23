@@ -1,12 +1,11 @@
 """Task service for handling task-related operations."""
 
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError
 from typing import List, Optional
 from datetime import datetime
 
 from src.models.task import Task, TaskCreate, TaskUpdate
-from src.database.session import get_db
 
 
 class TaskService:
@@ -41,7 +40,8 @@ class TaskService:
         Get task by ID
         """
         try:
-            return self.db.query(Task).filter(Task.id == task_id).first()
+            statement = select(Task).where(Task.id == task_id)
+            return self.db.exec(statement).first()
         except SQLAlchemyError:
             self.db.rollback()
             raise
@@ -55,15 +55,16 @@ class TaskService:
         Get all tasks for a user with optional status filter
         """
         try:
-            query = self.db.query(Task).filter(Task.user_id == user_id)
+            statement = select(Task).where(Task.user_id == user_id)
 
             if status_filter == "pending":
-                query = query.filter(Task.completed == False)
+                statement = statement.where(Task.completed == False)
             elif status_filter == "completed":
-                query = query.filter(Task.completed == True)
+                statement = statement.where(Task.completed == True)
             # If status_filter is "all", return all tasks
 
-            return query.order_by(Task.created_at.desc()).all()
+            statement = statement.order_by(Task.created_at.desc())
+            return self.db.exec(statement).all()
         except SQLAlchemyError:
             self.db.rollback()
             raise
