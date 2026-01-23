@@ -209,13 +209,16 @@ class ApiClient {
   async sendMessage(userId: string, message: string, conversationId?: string) {
     const requestBody: any = {
       message,
+      context: {
+        user_id: userId
+      }
     };
 
     if (conversationId) {
       requestBody.conversation_id = conversationId;
     }
 
-    return this.request<any>(`/${userId}/chat`, {
+    return this.request<any>('chat', {
       method: 'POST',
       body: JSON.stringify(requestBody)
     });
