@@ -48,7 +48,7 @@ class TaskService:
 
     def get_tasks_by_user(
         self,
-        user_id: int,
+        user_id: str,
         status_filter: Optional[str] = "all"
     ) -> List[Task]:
         """

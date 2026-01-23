@@ -47,11 +47,8 @@ def add_task(user_id: str, title: str, description: Optional[str] = None) -> Dic
         if not title or not title.strip():
             raise ValidationError("title is required and cannot be empty")
 
-        # Convert user_id to integer for database operations
-        try:
-            user_id_int = int(user_id)
-        except ValueError:
-            raise ValidationError("user_id must be a valid integer")
+        # Use user_id as string for database operations (consistent with User model)
+        user_id_str = str(user_id)
 
         # Get database session
         db = _get_db_session()
@@ -60,7 +57,7 @@ def add_task(user_id: str, title: str, description: Optional[str] = None) -> Dic
         try:
             # Create task data
             task_create_data = TaskCreate(
-                user_id=user_id_int,
+                user_id=user_id_str,
                 title=title.strip(),
                 description=description.strip() if description else None
             )
@@ -103,11 +100,8 @@ def list_tasks(user_id: str, status: str = "all") -> List[Dict[str, Any]]:
         if status not in valid_statuses:
             status = "all"  # Default to "all" if invalid status provided
 
-        # Convert user_id to integer for database operations
-        try:
-            user_id_int = int(user_id)
-        except ValueError:
-            raise ValidationError("user_id must be a valid integer")
+        # Use user_id as string for database operations (consistent with User model)
+        user_id_str = str(user_id)
 
         # Get database session
         db = _get_db_session()
@@ -115,7 +109,7 @@ def list_tasks(user_id: str, status: str = "all") -> List[Dict[str, Any]]:
 
         try:
             # Get tasks for the user with status filter
-            tasks = task_service.get_tasks_by_user(user_id_int, status)
+            tasks = task_service.get_tasks_by_user(user_id_str, status)
 
             # Convert tasks to response format
             result = []
@@ -156,11 +150,8 @@ def complete_task(user_id: str, task_id: int) -> Dict[str, Any]:
         if not task_id:
             raise ValidationError("task_id is required")
 
-        # Convert user_id to integer for database operations
-        try:
-            user_id_int = int(user_id)
-        except ValueError:
-            raise ValidationError("user_id must be a valid integer")
+        # Use user_id as string for database operations (consistent with User model)
+        user_id_str = str(user_id)
 
         # Get database session
         db = _get_db_session()
@@ -173,7 +164,7 @@ def complete_task(user_id: str, task_id: int) -> Dict[str, Any]:
                 raise TaskNotFoundError(task_id)
 
             # Verify user ownership
-            if task.user_id != user_id_int:
+            if str(task.user_id) != user_id_str:
                 raise AuthorizationError("User is not authorized to modify this task")
 
             # Complete the task
@@ -211,11 +202,8 @@ def delete_task(user_id: str, task_id: int) -> Dict[str, Any]:
         if not task_id:
             raise ValidationError("task_id is required")
 
-        # Convert user_id to integer for database operations
-        try:
-            user_id_int = int(user_id)
-        except ValueError:
-            raise ValidationError("user_id must be a valid integer")
+        # Use user_id as string for database operations (consistent with User model)
+        user_id_str = str(user_id)
 
         # Get database session
         db = _get_db_session()
@@ -228,7 +216,7 @@ def delete_task(user_id: str, task_id: int) -> Dict[str, Any]:
                 raise TaskNotFoundError(task_id)
 
             # Verify user ownership
-            if task.user_id != user_id_int:
+            if str(task.user_id) != user_id_str:
                 raise AuthorizationError("User is not authorized to delete this task")
 
             # Store task details before deletion for response
@@ -282,11 +270,8 @@ def update_task(
         if title is None and description is None:
             raise ValidationError("At least one of title or description must be provided")
 
-        # Convert user_id to integer for database operations
-        try:
-            user_id_int = int(user_id)
-        except ValueError:
-            raise ValidationError("user_id must be a valid integer")
+        # Use user_id as string for database operations (consistent with User model)
+        user_id_str = str(user_id)
 
         # Get database session
         db = _get_db_session()
@@ -299,7 +284,7 @@ def update_task(
                 raise TaskNotFoundError(task_id)
 
             # Verify user ownership
-            if task.user_id != user_id_int:
+            if str(task.user_id) != user_id_str:
                 raise AuthorizationError("User is not authorized to update this task")
 
             # Prepare update data
