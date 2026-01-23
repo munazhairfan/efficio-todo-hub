@@ -13,13 +13,13 @@ class Task(SQLModel, table=True):
     """
     __tablename__ = "tasks"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True, sa_column=Column(Integer, primary_key=True, index=True))
     user_id: str = Field(sa_column=Column(String, nullable=False, index=True))  # Foreign key to users table
     title: str = Field(sa_column=Column(String, nullable=False))  # Title of the task
     description: Optional[str] = Field(sa_column=Column(Text, nullable=True))  # Detailed description of the task
     completed: bool = Field(sa_column=Column(Boolean, default=False, nullable=False))  # Whether the task is completed or not
     created_at: datetime = Field(sa_column=Column(DateTime, default=datetime.utcnow))
-    updated_at: datetime = Field(sa_column=Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow))
+    updated_at: datetime = Field(sa_column=Column(DateTime, default=datetime.utcnow))
 
     # Relationship to user (if user model exists)
     # user = relationship("User", back_populates="tasks")
