@@ -18,9 +18,10 @@ security = HTTPBearer(auto_error=False)  # Don't auto-error so we can handle una
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
-):
+) -> Optional[User]:
     """
     Dependency to get the current user from the JWT token.
+    Returns None for unauthenticated users, allowing endpoints to handle authentication as needed.
     """
     if not credentials or not credentials.credentials:
         # Return None for unauthenticated users, which will be handled by individual endpoints
@@ -32,30 +33,22 @@ def get_current_user(
         user_id: str = payload.get("sub")
 
         if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials"
-            )
+            return None  # Return None instead of raising exception to allow fallback
 
         # Get user from database
-        user = db.exec(select(User).where(User.id == int(user_id))).first()
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found"
-            )
+        try:
+            user = db.exec(select(User).where(User.id == int(user_id))).first()
+            if user is None:
+                return None  # Return None instead of raising exception to allow fallback
+        except ValueError:
+            # If user_id is not numeric, it might be invalid
+            return None
 
         return user
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired"
-        )
+        return None  # Return None instead of raising exception to allow fallback
     except jwt.JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials"
-        )
+        return None  # Return None instead of raising exception to allow fallback
     except Exception as e:
         # For any other error, return None to indicate unauthenticated state
         return None
