@@ -77,7 +77,6 @@ def get_engine():
 
 
 def get_session() -> Generator[Session, None, None]:
-    # Get the engine and create a session
     engine = get_engine()
     session = Session(engine)
     try:
