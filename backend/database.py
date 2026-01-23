@@ -64,9 +64,18 @@ def get_engine():
 
 
 def get_session() -> Generator[Session, None, None]:
-    # Ensure all SQLModel tables are created before using the session
+    # Ensure all tables are created before using the session
     engine = get_engine()
+    # Create tables for SQLAlchemy models (using declarative base from session)
+    from .src.database.session import Base as SQLAlchemyBase
+    SQLAlchemyBase.metadata.create_all(bind=engine)
+    # Create tables for SQLModel models
     SQLModel.metadata.create_all(bind=engine)
 
-    with Session(get_engine()) as session:
+    # Create and return a session directly instead of using a generator
+    # This avoids potential issues with FastAPI's dependency injection
+    session = Session(engine)
+    try:
         yield session
+    finally:
+        session.close()

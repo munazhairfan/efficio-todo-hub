@@ -19,11 +19,12 @@ from .database.session import get_db, get_session_local
 
 def _get_db_session() -> Session:
     """Get a database session for MCP tools"""
-    from .database import get_session
-    # Use the generator and get the session
-    db_gen = get_session()
-    db = next(db_gen)
-    return db
+    from .database import get_engine
+    from sqlmodel import Session
+
+    # Create a fresh session for MCP tools operations
+    engine = get_engine()
+    return Session(engine)
 
 
 def _validate_user_ownership(user_id: str, task: Task) -> None:
