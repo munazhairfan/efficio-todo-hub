@@ -19,7 +19,7 @@ export default function SimpleChatInterface() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Load any existing conversation from localStorage
@@ -80,9 +80,18 @@ export default function SimpleChatInterface() {
     setIsLoading(true);
 
     try {
-      // Check if user is authenticated
-      const token = localStorage.getItem('authToken');
-      const isAuthenticated = token && user?.id;
+      // Use the proper authentication state from the AuthProvider
+      // Check if authentication is still loading
+      if (authLoading) {
+        const assistantMessage: Message = {
+          id: Date.now() + 1,
+          type: 'assistant',
+          content: 'Loading authentication status...'
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsLoading(false);
+        return;
+      }
 
       // Check if this is a task-related request that requires authentication
       const taskRelatedKeywords = [
@@ -163,8 +172,11 @@ export default function SimpleChatInterface() {
       };
 
       // Only add authorization header if authenticated
-      if (isAuthenticated && token) {
-        apiCallHeaders['Authorization'] = `Bearer ${token}`;
+      if (isAuthenticated) {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          apiCallHeaders['Authorization'] = `Bearer ${token}`;
+        }
       }
 
       const response = await fetch('/api/conversation/clarify', {
@@ -173,7 +185,7 @@ export default function SimpleChatInterface() {
         body: JSON.stringify({
           input: inputValue.trim(),
           context: {
-            user_id: user?.id || localStorage.getItem('user_id') || localStorage.getItem('userId') || (isAuthenticated ? 'temp_user' : 'guest_user')
+            user_id: user?.id || (isAuthenticated ? 'temp_user' : 'guest_user')
           }
         })
       });
