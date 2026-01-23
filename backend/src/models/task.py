@@ -14,7 +14,7 @@ class Task(SQLModel, table=True):
     __tablename__ = "todos"  # Use 'todos' table name to match existing database schema
 
     id: Optional[int] = Field(default=None, sa_column=Column(Integer, primary_key=True, index=True))
-    user_id: int = Field(sa_column=Column(Integer, nullable=False, index=True))  # Foreign key to users table (references users.id which is INTEGER)
+    user_id: str = Field(sa_column=Column(String, nullable=False, index=True))  # Foreign key to users table (matches frontend User.id format)
     title: str = Field(sa_column=Column(String, nullable=False))  # Title of the task
     description: Optional[str] = Field(sa_column=Column(Text, nullable=True))  # Detailed description of the task
     completed: bool = Field(sa_column=Column(Boolean, default=False, nullable=False))  # Whether the task is completed or not
@@ -31,7 +31,7 @@ from typing import Optional
 
 
 class TaskCreate(SQLModel):
-    user_id: int
+    user_id: str
     title: str
     description: Optional[str] = None
     completed: Optional[bool] = False
@@ -45,7 +45,7 @@ class TaskUpdate(SQLModel):
 
 class TaskResponse(SQLModel):
     id: int
-    user_id: int
+    user_id: str
     title: str
     description: Optional[str] = None
     completed: bool
