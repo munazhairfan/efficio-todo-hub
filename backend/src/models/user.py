@@ -11,7 +11,7 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, table=True):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)  # Will use database auto-increment
     password_hash: str  # In practice, store hashed passwords
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -27,7 +27,7 @@ class UserUpdate(BaseModel):
 
 
 class UserResponse(UserBase):
-    id: str
+    id: int
     created_at: datetime
     updated_at: datetime
 

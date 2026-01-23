@@ -1,7 +1,7 @@
 // Shared TypeScript type definitions
 
 export interface User {
-  id: string;
+  id: number;  // Changed to number to match database integer ID
   email: string;
   name: string;
   createdAt: string; // ISO date string
@@ -13,7 +13,7 @@ export interface Todo {
   title: string;
   description?: string;
   completed: boolean;
-  userId: string;
+  userId: number;  // Changed to number to match database integer ID
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -42,7 +42,7 @@ export interface SigninResponse {
 }
 
 export interface GetUserResponse {
-  id: string;
+  id: number;  // Changed to number to match database integer ID
   email: string;
   name: string;
   createdAt: string; // ISO date string
