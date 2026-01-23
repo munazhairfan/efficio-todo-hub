@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Optional
 
 
-class Task(SQLModel, table=True):
+class Task(SQLModel, table=True, extend_existing=True):
     """
     Represents a single item in a user's to-do list, containing id, title, description, status, and user association
     """
