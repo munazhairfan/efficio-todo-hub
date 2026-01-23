@@ -54,15 +54,7 @@ async def chat_endpoint(
             detail="Message is required"
         )
 
-    # Verify authentication
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header with Bearer token is required"
-        )
-
-    # For simplicity, we'll extract user ID from context or use a temporary one
-    # In a real implementation, we'd decode the JWT token properly
+    # Extract user ID from context
     user_id = context.get("user_id") or "temp_user"
 
     # Check rate limit
@@ -83,7 +75,7 @@ async def chat_endpoint(
         # Task was handled locally, return response directly
         return {
             "response": task_result["response"],
-            "conversationId": conversation_id,
+            "conversationId": str(uuid.uuid4()),
             "type": "task_response"
         }
 
