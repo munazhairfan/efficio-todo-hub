@@ -4,7 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     """Application settings"""
-    database_url: str = "sqlite:////tmp/test.db"  # Use /tmp for Hugging Face Spaces compatibility
+    database_url: str = "postgresql://postgres:postgres@localhost:5432/todo_app"  # Default PostgreSQL connection
     secret_key: str = "dev-secret-key-change-in-production"  # Default for development/testing
     openrouter_api_key: str = ""  # Optional - will be set via OPENROUTER_API_KEY environment variable if needed
     algorithm: str = "HS256"
