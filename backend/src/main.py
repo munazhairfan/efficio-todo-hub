@@ -67,10 +67,14 @@ except ImportError:
     print("Could not import API chat router - this may be expected depending on the deployment environment")
 
 # Directly add the conversation clarify endpoint to ensure it's available
+from src.core.dependencies import get_current_user
+from src.models.user import User
+
 @app.post("/api/conversation/clarify", response_model=Dict[str, Any])
 async def clarify_conversation_direct(
     data: Dict[str, Any],
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Submit a request that requires clarification or submit clarifying information.
@@ -91,8 +95,15 @@ async def clarify_conversation_direct(
     # Initialize services
     conv_service = ConversationService(session)
 
-    # Extract user ID from context if available, otherwise use a default
-    user_id = context.get("user_id", "temp_user")
+    # Use authenticated user's ID if available, otherwise try context, then mark as unauthenticated
+    if current_user and hasattr(current_user, 'id') and current_user.id:
+        user_id = str(current_user.id)
+    else:
+        # Extract user ID from context if available
+        user_id = context.get("user_id")
+        if not user_id or user_id in ["temp_user", "guest_user", "null", "undefined", "", "None"]:
+            # If no valid user_id in context, default to indicating unauthenticated state
+            user_id = "unauthenticated_user"
 
     # First, try to process the user input through the task intelligence service
     # This handles task-related requests with specific logic
