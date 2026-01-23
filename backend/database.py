@@ -1,4 +1,4 @@
-from sqlmodel import create_engine, Session
+from sqlmodel import create_engine, Session, SQLModel
 from typing import Generator
 import sys
 import os
@@ -12,6 +12,7 @@ try:
     # Try absolute import from the backend directory
     from src.core.config import settings
     from src.models.user import User
+    from src.models.task import Task  # Import Task to register with SQLModel metadata
     from api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
     from api.models.error_context import ErrorContext
 except ImportError:
@@ -19,6 +20,7 @@ except ImportError:
     try:
         from .src.core.config import settings
         from .src.models.user import User
+        from .src.models.task import Task  # Import Task to register with SQLModel metadata
         from .api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
         from .api.models.error_context import ErrorContext
     except ImportError:
@@ -27,6 +29,7 @@ except ImportError:
             # For when running from parent directory
             from backend.src.core.config import settings
             from backend.src.models.user import User
+            from backend.src.models.task import Task  # Import Task to register with SQLModel metadata
             from backend.api.models.conversation_state import ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
             from backend.api.models.error_context import ErrorContext
         except ImportError:
@@ -61,5 +64,9 @@ def get_engine():
 
 
 def get_session() -> Generator[Session, None, None]:
+    # Ensure all SQLModel tables are created before using the session
+    engine = get_engine()
+    SQLModel.metadata.create_all(bind=engine)
+
     with Session(get_engine()) as session:
         yield session
