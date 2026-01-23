@@ -29,7 +29,13 @@ def _get_db_session() -> Session:
 
 def _validate_user_ownership(user_id: str, task: Task) -> None:
     """Validate that the user owns the task"""
-    if str(task.user_id) != user_id:
+    # Convert user_id to integer for comparison with the integer task.user_id
+    try:
+        user_id_int = int(user_id)
+        if task.user_id != user_id_int:
+            raise AuthorizationError("User is not authorized to access this task")
+    except ValueError:
+        # If user_id is not numeric, it might be a placeholder like "temp_user", so deny access
         raise AuthorizationError("User is not authorized to access this task")
 
 
@@ -52,8 +58,15 @@ def add_task(user_id: str, title: str, description: Optional[str] = None) -> Dic
         if not title or not title.strip():
             raise ValidationError("title is required and cannot be empty")
 
-        # Use user_id as string for database operations (consistent with User model)
-        user_id_str = str(user_id)
+        # Check if user_id is a valid format (numeric ID) rather than placeholder strings
+        if user_id in ["temp_user", "guest_user", "null", "undefined", ""]:
+            raise ValidationError("Authentication required to create tasks")
+
+        # Convert user_id to integer for database operations (since database expects INTEGER)
+        try:
+            user_id_int = int(user_id)
+        except ValueError:
+            raise ValidationError("Invalid user_id format. Expected numeric ID.")
 
         # Get database session
         db = _get_db_session()
@@ -62,7 +75,7 @@ def add_task(user_id: str, title: str, description: Optional[str] = None) -> Dic
         try:
             # Create task data
             task_create_data = TaskCreate(
-                user_id=user_id_str,
+                user_id=user_id_int,
                 title=title.strip(),
                 description=description.strip() if description else None
             )
@@ -105,8 +118,17 @@ def list_tasks(user_id: str, status: str = "all") -> List[Dict[str, Any]]:
         if status not in valid_statuses:
             status = "all"  # Default to "all" if invalid status provided
 
-        # Use user_id as string for database operations (consistent with User model)
-        user_id_str = str(user_id)
+        # Check if user_id is a valid format (numeric ID) rather than placeholder strings
+        if user_id in ["temp_user", "guest_user", "null", "undefined", ""]:
+            # Return empty list for non-authenticated users
+            return []
+
+        # Convert user_id to integer for database operations (since database expects INTEGER)
+        try:
+            user_id_int = int(user_id)
+        except ValueError:
+            # If user_id is not numeric, it might be invalid - return empty list
+            return []
 
         # Get database session
         db = _get_db_session()
@@ -114,7 +136,7 @@ def list_tasks(user_id: str, status: str = "all") -> List[Dict[str, Any]]:
 
         try:
             # Get tasks for the user with status filter
-            tasks = task_service.get_tasks_by_user(user_id_str, status)
+            tasks = task_service.get_tasks_by_user(user_id_int, status)
 
             # Convert tasks to response format
             result = []
@@ -155,8 +177,15 @@ def complete_task(user_id: str, task_id: int) -> Dict[str, Any]:
         if not task_id:
             raise ValidationError("task_id is required")
 
-        # Use user_id as string for database operations (consistent with User model)
-        user_id_str = str(user_id)
+        # Check if user_id is a valid format (numeric ID) rather than placeholder strings
+        if user_id in ["temp_user", "guest_user", "null", "undefined", ""]:
+            raise ValidationError("Authentication required to complete tasks")
+
+        # Convert user_id to integer for database operations (since database expects INTEGER)
+        try:
+            user_id_int = int(user_id)
+        except ValueError:
+            raise ValidationError("Invalid user_id format. Expected numeric ID.")
 
         # Get database session
         db = _get_db_session()
@@ -168,8 +197,8 @@ def complete_task(user_id: str, task_id: int) -> Dict[str, Any]:
             if not task:
                 raise TaskNotFoundError(task_id)
 
-            # Verify user ownership
-            if str(task.user_id) != user_id_str:
+            # Verify user ownership using integer user_id
+            if task.user_id != user_id_int:
                 raise AuthorizationError("User is not authorized to modify this task")
 
             # Complete the task
@@ -207,8 +236,15 @@ def delete_task(user_id: str, task_id: int) -> Dict[str, Any]:
         if not task_id:
             raise ValidationError("task_id is required")
 
-        # Use user_id as string for database operations (consistent with User model)
-        user_id_str = str(user_id)
+        # Check if user_id is a valid format (numeric ID) rather than placeholder strings
+        if user_id in ["temp_user", "guest_user", "null", "undefined", ""]:
+            raise ValidationError("Authentication required to delete tasks")
+
+        # Convert user_id to integer for database operations (since database expects INTEGER)
+        try:
+            user_id_int = int(user_id)
+        except ValueError:
+            raise ValidationError("Invalid user_id format. Expected numeric ID.")
 
         # Get database session
         db = _get_db_session()
@@ -220,8 +256,8 @@ def delete_task(user_id: str, task_id: int) -> Dict[str, Any]:
             if not task:
                 raise TaskNotFoundError(task_id)
 
-            # Verify user ownership
-            if str(task.user_id) != user_id_str:
+            # Verify user ownership using integer user_id
+            if task.user_id != user_id_int:
                 raise AuthorizationError("User is not authorized to delete this task")
 
             # Store task details before deletion for response
@@ -275,8 +311,15 @@ def update_task(
         if title is None and description is None:
             raise ValidationError("At least one of title or description must be provided")
 
-        # Use user_id as string for database operations (consistent with User model)
-        user_id_str = str(user_id)
+        # Check if user_id is a valid format (numeric ID) rather than placeholder strings
+        if user_id in ["temp_user", "guest_user", "null", "undefined", ""]:
+            raise ValidationError("Authentication required to update tasks")
+
+        # Convert user_id to integer for database operations (since database expects INTEGER)
+        try:
+            user_id_int = int(user_id)
+        except ValueError:
+            raise ValidationError("Invalid user_id format. Expected numeric ID.")
 
         # Get database session
         db = _get_db_session()
@@ -288,8 +331,8 @@ def update_task(
             if not task:
                 raise TaskNotFoundError(task_id)
 
-            # Verify user ownership
-            if str(task.user_id) != user_id_str:
+            # Verify user ownership using integer user_id
+            if task.user_id != user_id_int:
                 raise AuthorizationError("User is not authorized to update this task")
 
             # Prepare update data

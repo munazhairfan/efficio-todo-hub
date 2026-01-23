@@ -55,7 +55,8 @@ class TaskService:
         Get all tasks for a user with optional status filter
         """
         try:
-            statement = select(Task).where(Task.user_id == user_id)
+            # Use proper SQLModel syntax for the query
+            statement = select(Task).where(Task.user_id == str(user_id))
 
             if status_filter == "pending":
                 statement = statement.where(Task.completed == False)
@@ -64,7 +65,9 @@ class TaskService:
             # If status_filter is "all", return all tasks
 
             statement = statement.order_by(Task.created_at.desc())
-            return self.db.exec(statement).all()
+            result = self.db.exec(statement)
+            tasks = result.all()
+            return tasks
         except SQLAlchemyError:
             self.db.rollback()
             raise
