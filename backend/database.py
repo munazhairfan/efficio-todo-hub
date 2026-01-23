@@ -41,6 +41,15 @@ except ImportError:
 _engine = None
 
 
+def create_tables(engine):
+    """Create all database tables"""
+    # Create tables for SQLAlchemy models (using declarative base from session)
+    from .src.database.session import Base as SQLAlchemyBase
+    SQLAlchemyBase.metadata.create_all(bind=engine)
+    # Create tables for SQLModel models
+    SQLModel.metadata.create_all(bind=engine)
+
+
 def get_engine():
     """Get database engine, creating it if it doesn't exist"""
     global _engine
@@ -60,20 +69,16 @@ def get_engine():
                 pass  # If there's an issue, continue with original URL
 
         _engine = create_engine(database_url, echo=True)
+
+        # Create all tables when engine is first created
+        create_tables(_engine)
+
     return _engine
 
 
 def get_session() -> Generator[Session, None, None]:
-    # Ensure all tables are created before using the session
+    # Get the engine and create a session
     engine = get_engine()
-    # Create tables for SQLAlchemy models (using declarative base from session)
-    from .src.database.session import Base as SQLAlchemyBase
-    SQLAlchemyBase.metadata.create_all(bind=engine)
-    # Create tables for SQLModel models
-    SQLModel.metadata.create_all(bind=engine)
-
-    # Create and return a session directly instead of using a generator
-    # This avoids potential issues with FastAPI's dependency injection
     session = Session(engine)
     try:
         yield session
