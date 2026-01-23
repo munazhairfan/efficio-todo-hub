@@ -48,15 +48,15 @@ class TaskService:
 
     def get_tasks_by_user(
         self,
-        user_id: str,
+        user_id: int,  # Changed from str to int to match the database schema
         status_filter: Optional[str] = "all"
     ) -> List[Task]:
         """
         Get all tasks for a user with optional status filter
         """
         try:
-            # Use proper SQLModel syntax for the query
-            statement = select(Task).where(Task.user_id == str(user_id))
+            # Use proper SQLModel syntax for the query - compare integers directly
+            statement = select(Task).where(Task.user_id == user_id)
 
             if status_filter == "pending":
                 statement = statement.where(Task.completed == False)
