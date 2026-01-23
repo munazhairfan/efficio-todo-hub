@@ -106,6 +106,7 @@ export default function SimpleChatInterface() {
 
       if (isTaskRelated && !isAuthenticated) {
         // For task-related requests without authentication, provide helpful response
+        // And avoid calling the backend with invalid user_id
         const assistantMessage: Message = {
           id: Date.now() + 1,
           type: 'assistant',
@@ -114,7 +115,7 @@ export default function SimpleChatInterface() {
 
         setMessages(prev => [...prev, assistantMessage]);
         setIsLoading(false);
-        return;
+        return; // Return early to prevent calling the backend with invalid user_id
       }
 
       // For non-task related questions, allow unauthenticated users to ask general questions
