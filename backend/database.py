@@ -44,7 +44,22 @@ _engine = None
 def create_tables(engine):
     """Create all database tables"""
     # Create tables for SQLAlchemy models (using declarative base from session)
-    from .src.database.session import Base as SQLAlchemyBase
+    # Use fallback import strategies to handle different deployment contexts
+    try:
+        # Try absolute import first
+        from src.database.session import Base as SQLAlchemyBase
+    except ImportError:
+        try:
+            # Try relative import
+            from .src.database.session import Base as SQLAlchemyBase
+        except ImportError:
+            # Last resort - try different path structure
+            try:
+                from database.session import Base as SQLAlchemyBase
+            except ImportError:
+                # If all imports fail, raise with more informative error
+                raise ImportError("Could not import SQLAlchemy Base from any known path")
+
     SQLAlchemyBase.metadata.create_all(bind=engine)
     # Create tables for SQLModel models
     SQLModel.metadata.create_all(bind=engine)
