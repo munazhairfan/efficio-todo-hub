@@ -31,7 +31,7 @@ class ConversationService:
         """Get conversation state by session ID"""
         try:
             statement = select(ConversationState).where(ConversationState.session_id == session_id)
-            conversation = self.session.exec(statement).first()
+            conversation = self.session.execute(statement).first()
 
             # Check if conversation has expired
             if conversation and conversation.expires_at < datetime.now(timezone.utc):
@@ -91,7 +91,7 @@ class ConversationService:
         """Remove all expired conversation states and return count of deleted items"""
         try:
             statement = select(ConversationState).where(ConversationState.expires_at < datetime.now(timezone.utc))
-            expired_conversations = self.session.exec(statement).all()
+            expired_conversations = self.session.execute(statement).all()
 
             count = 0
             for conversation in expired_conversations:
