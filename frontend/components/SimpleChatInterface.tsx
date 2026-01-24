@@ -180,13 +180,55 @@ export default function SimpleChatInterface() {
         }
       }
 
+      // Ensure we have a proper user ID before making the API call
+      let userIdToSend = 'guest_user';
+
+      if (user && user.id) {
+        // If user object is loaded with an ID, use it
+        userIdToSend = user.id.toString(); // Convert number to string as expected by backend
+      } else if (isAuthenticated) {
+        // If authenticated but user not loaded yet, try to get from storage
+        // First try to get the user from API if not loaded yet
+        if (!user && !authLoading) {
+          try {
+            // Attempt to get user data if we know the user is authenticated but data isn't loaded
+            const token = localStorage.getItem('authToken');
+            if (token) {
+              // Make a direct API call to get user info
+              const userResponse = await fetch('/api/users', {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (userResponse.ok) {
+                const userData = await userResponse.json();
+                userIdToSend = userData.id?.toString() || localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
+              } else {
+                // If API call fails, try to get from local storage
+                userIdToSend = localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
+              }
+            }
+          } catch (error) {
+            // If all attempts fail, try local storage fallbacks
+            userIdToSend = localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
+            console.warn('Could not fetch user data, using fallback ID:', userIdToSend);
+          }
+        } else {
+          // User data is still loading, try storage
+          userIdToSend = localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
+        }
+      }
+      // If not authenticated, keep as 'guest_user'
+
       const response = await fetch('/api/conversation/clarify', {
         method: 'POST',
         headers: apiCallHeaders,
         body: JSON.stringify({
           input: inputValue.trim(),
           context: {
-            user_id: user?.id || (isAuthenticated ? (localStorage.getItem('user_id') || localStorage.getItem('userId') || 'guest_user') : 'guest_user')
+            user_id: userIdToSend
           }
         })
       });
