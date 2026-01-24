@@ -365,7 +365,7 @@ class TaskIntelligenceService:
 
                 result = complete_task(user_id=user_id, task_id=task_id)
                 return {
-                    "response": f"Excellent! I've marked task '#{result['id']}: {result['title']}' as completed! Great job!",
+                    "response": f"Excellent! I've marked task '#{result['task_id']}: {result['title']}' as completed! Great job!",
                     "handled_locally": True,
                     "tool_call": {
                         "name": "complete_task",
@@ -399,7 +399,7 @@ class TaskIntelligenceService:
 
                 result = delete_task(user_id=user_id, task_id=task_id)
                 return {
-                    "response": f"Got it! I've deleted task '#{result['id']}: {result['title']}'. It's gone forever!",
+                    "response": f"Got it! I've deleted task '#{result['task_id']}: {result['title']}'. It's gone forever!",
                     "handled_locally": True,
                     "tool_call": {
                         "name": "delete_task",
@@ -446,7 +446,7 @@ class TaskIntelligenceService:
 
                     result = update_task(user_id=user_id, task_id=task_id, title=new_title)
                     return {
-                        "response": f"Perfect! I've updated task #{result['id']} to '{result['title']}'. Looks much better!",
+                        "response": f"Perfect! I've updated task #{result['task_id']} to '{result['title']}'. Looks much better!",
                         "handled_locally": True,
                         "tool_call": {
                             "name": "update_task",
