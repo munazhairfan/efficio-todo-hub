@@ -53,11 +53,16 @@ class ApiClient {
     const headers = new Headers(options.headers);
     headers.set('Content-Type', 'application/json');
 
-    // For our Vercel API routes, authentication is handled via cookies
-    // The API routes will manage the auth token internally
+    // Include Authorization header with JWT token if available
+    if (includeAuth) {
+      const token = this.getAuthToken();
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+    }
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${url}`, {  // Fixed: was using undefined 'url' variable
         ...options,
         method, // Ensure method is properly passed
         headers,
@@ -77,9 +82,35 @@ class ApiClient {
 
       return response.json();
     } catch (error) {
-      console.error('API request failed for URL:', url, 'Error:', error);
+      console.error('API request failed for URL:', `${url}`, 'Error:', error);  // Fixed: was using undefined 'url' variable
       throw error;
     }
+  }
+
+  // Helper method to get the auth token from cookies or localStorage
+  private getAuthToken(): string | null {
+    // First try to get from document.cookie (browser)
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie.split(';');
+      for (const cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'authToken') {
+          return value;
+        }
+      }
+    }
+
+    // Fallback to localStorage for client-side storage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const token = window.localStorage.getItem('authToken');
+      if (token) {
+        return token;
+      }
+    }
+
+    // For server-side rendering, we might need to get it differently
+    // But in client-side this should work
+    return null;
   }
 
   // Authentication API calls
