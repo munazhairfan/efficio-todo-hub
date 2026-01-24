@@ -250,7 +250,7 @@ class TaskIntelligenceService:
                 }
             elif 'help' in message_lower:
                 return {
-                    "response": "I'm here to help you manage your tasks! You can ask me to:\n• Add a task (e.g., 'add a task to buy groceries')\n• List your tasks (e.g., 'show me my tasks')\n• Complete a task (e.g., 'complete task #1')\n• Delete a task (e.g., 'delete task #1')\n• Update a task (e.g., 'update task #1 to new title')\n\nWhat would you like to do?",
+                    "response": "I'm here to help you manage your tasks! You can ask me to:\n- Add a task (e.g., 'add a task to buy groceries')\n- List your tasks (e.g., 'show me my tasks')\n- Complete a task (e.g., 'complete task #1')\n- Delete a task (e.g., 'delete task #1')\n- Update a task (e.g., 'update task #1 to new title')\n\nWhat would you like to do?",
                     "handled_locally": True
                 }
             else:
@@ -264,14 +264,14 @@ class TaskIntelligenceService:
                 if not title or not title.strip():
                     # If we couldn't extract a title, ask for clarification
                     return {
-                        "response": "I'm not sure what task you'd like to add. Could you please specify what task you want to create? 😊",
+                        "response": "I'm not sure what task you'd like to add. Could you please specify what task you want to create?",
                         "handled_locally": True
                     }
 
                 # Validate task title length
                 if len(title.strip()) < 2:
                     return {
-                        "response": "The task title seems too short. Please provide a more detailed task description. 🤔",
+                        "response": "The task title seems too short. Please provide a more detailed task description.",
                         "handled_locally": True
                     }
 
@@ -309,21 +309,21 @@ class TaskIntelligenceService:
                     completed_tasks = [task for task in tasks if task['status'] == 'completed']
 
                     if pending_tasks and completed_tasks:
-                        pending_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in pending_tasks])
-                        completed_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in completed_tasks])
+                        pending_list = "\n".join([f"  - #{task['id']}: {task['title']}" for task in pending_tasks])
+                        completed_list = "\n".join([f"  - #{task['id']}: {task['title']}" for task in completed_tasks])
                         response = f"Here are your tasks:\n\nPending ({len(pending_tasks)}):\n{pending_list}"
                         if completed_tasks:
                             response += f"\n\nCompleted ({len(completed_tasks)}):\n{completed_list}"
                     elif pending_tasks:
-                        task_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in pending_tasks])
+                        task_list = "\n".join([f"  - #{task['id']}: {task['title']}" for task in pending_tasks])
                         response = f"Here are your {len(pending_tasks)} pending tasks:\n{task_list}"
                     elif completed_tasks:
-                        task_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in completed_tasks])
+                        task_list = "\n".join([f"  - #{task['id']}: {task['title']}" for task in completed_tasks])
                         response = f"Here are your {len(completed_tasks)} completed tasks:\n{task_list}"
                     else:
-                        response = f"Here are your {len(tasks)} tasks:\n" + "\n".join([f"  • #{task['id']}: {task['title']}" for task in tasks])
+                        response = f"Here are your {len(tasks)} tasks:\n" + "\n".join([f"  - #{task['id']}: {task['title']}" for task in tasks])
                 else:
-                    task_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in tasks])
+                    task_list = "\n".join([f"  - #{task['id']}: {task['title']}" for task in tasks])
                     status_display = "pending" if status == "pending" else status
                     response = f"Here are your {len(tasks)} {status_display} tasks:\n{task_list}"
 
@@ -359,7 +359,7 @@ class TaskIntelligenceService:
                 # Validate that the task ID is positive
                 if task_id <= 0:
                     return {
-                        "response": "Task numbers must be positive. Please specify a valid task number. 📝",
+                        "response": "Task numbers must be positive. Please specify a valid task number.",
                         "handled_locally": True
                     }
 
@@ -440,7 +440,7 @@ class TaskIntelligenceService:
                     # Validate new title length
                     if len(new_title.strip()) < 2:
                         return {
-                            "response": "The new title seems too short. Please provide a more detailed task description. 🤔",
+                            "response": "The new title seems too short. Please provide a more detailed task description.",
                             "handled_locally": True
                         }
 

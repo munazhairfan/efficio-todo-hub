@@ -8,6 +8,7 @@ from sqlmodel import Session
 from typing import Dict, Any
 import uuid
 from datetime import datetime
+from src.core.dependencies import get_current_user
 
 from api.models.conversation_state import (
     ConversationState, ConversationStateCreate, ConversationStateUpdate, ConversationStateResponse
@@ -54,8 +55,45 @@ async def chat_endpoint(
             detail="Message is required"
         )
 
-    # Extract user ID from context
-    user_id = context.get("user_id") or "temp_user"
+    # Extract user ID from context if available
+    user_id = context.get("user_id")
+    if not user_id:
+        # Try to get user ID from authorization header using existing auth system
+        # This would require the request to have proper authorization header
+        # For now, we'll check if there's an authorization header and extract user info
+
+        # In the actual request processing, we need to extract the user from the authorization header
+        # Since we don't have direct access to the header here, we'll need to modify the approach
+        # Let's look for authorization in the context or data
+        auth_header = context.get("authorization") or data.get("authorization") or authorization
+
+        if auth_header:
+            # Process the authorization header to extract user ID
+            import re
+            # Handle "Bearer <token>" format
+            if auth_header.startswith("Bearer "):
+                token = auth_header[7:]
+            else:
+                token = auth_header
+
+            # Decode JWT token to get user ID (similar to get_current_user logic)
+            try:
+                from jose import jwt
+                from src.core.config import settings
+                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+                user_id = payload.get("sub") or payload.get("user_id")
+
+                if user_id is None:
+                    user_id = "temp_user"
+                else:
+                    user_id = str(user_id)  # Ensure it's a string
+            except Exception as e:
+                # If token decoding fails, fall back to temp_user
+                user_id = "temp_user"
+        else:
+            # If no authorization provided, default to temp_user
+            user_id = "temp_user"
+    # else: user_id already has a value from context, continue with original logic
 
     # Check rate limit
     is_allowed, error_msg = rate_limiter.is_allowed(str(user_id))
@@ -163,12 +201,13 @@ async def clarify_conversation(
                     user_id = "temp_user"
                 else:
                     user_id = str(user_id)  # Ensure it's a string
-            except:
+            except Exception as e:
                 # If token decoding fails, fall back to temp_user
                 user_id = "temp_user"
         else:
             # If no authorization provided, default to temp_user
             user_id = "temp_user"
+    # else: user_id already has a value from context, continue with original logic
 
     # Check rate limit for authenticated user
     is_allowed, error_msg = rate_limiter.is_allowed(str(user_id))

@@ -48,7 +48,7 @@ def db_session():
 def create_test_user(db_session):
     """Helper to create a test user"""
     def _create_test_user(email="test@example.com", name="Test User"):
-        from backend.src.models.user import User
+        from src.models.user import User
         user = User(email=email, name=name)
         db_session.add(user)
         db_session.commit()
@@ -60,7 +60,7 @@ def create_test_user(db_session):
 def create_test_task(db_session, create_test_user):
     """Helper to create a test task"""
     def _create_test_task(user_id, title="Test Task", description="Test Description"):
-        from backend.src.models.task import Task
+        from src.models.task import Task
         user = create_test_user()
         task = Task(user_id=user.id, title=title, description=description)
         db_session.add(task)
