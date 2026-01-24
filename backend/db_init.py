@@ -23,11 +23,16 @@ from src.database.session import Base
 def init_db():
     """Initialize the database with tables."""
     from src.database.session import get_engine
+    from sqlmodel import SQLModel
+
+    # Import all models to ensure they are registered with metadata
+    from src.models import task  # This should register the Task model
+    from src.models import user  # Import other models as needed
 
     engine = get_engine()
 
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
+    # Create all tables - use SQLModel metadata which includes both SQLAlchemy and SQLModel models
+    SQLModel.metadata.create_all(bind=engine)
     print("Database tables created successfully!")
 
 
