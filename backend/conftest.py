@@ -7,10 +7,11 @@ import asyncio
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from backend.src.main import app
-from backend.src.database.session import get_db
-from backend.src.models.task import Task
-from backend.src.models.user import User
+from src.main import app
+from src.database.session import get_db, Base
+from src.models.task import Task
+from src.models.user import User
+from sqlmodel import SQLModel
 
 # Use a test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
@@ -20,9 +21,9 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create tables
-from backend.src.database.base import Base
+# Create tables for both SQLAlchemy and SQLModel
 Base.metadata.create_all(bind=engine)
+SQLModel.metadata.create_all(bind=engine)
 
 @pytest.fixture(scope="module")
 def test_client():

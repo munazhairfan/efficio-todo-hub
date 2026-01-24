@@ -17,13 +17,14 @@ from .utils.errors import (
 from .database.session import get_db, get_session_local
 
 
-def _get_db_session() -> Session:
+def _get_db_session():
     """Get a database session for MCP tools"""
-    from .database import get_engine
     from sqlmodel import Session
+    from src.core.config import settings
+    from sqlmodel import create_engine
 
-    # Create a fresh session for MCP tools operations
-    engine = get_engine()
+    # Use SQLModel Session with the proper engine directly
+    engine = create_engine(settings.database_url)
     return Session(engine)
 
 
