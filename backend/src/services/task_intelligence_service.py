@@ -225,27 +225,27 @@ class TaskIntelligenceService:
             # Handle common casual conversation patterns that should be handled locally
             if any(greeting in message_lower for greeting in ['hello', 'hi', 'hey', 'howdy']):
                 return {
-                    "response": "👋 Hi there! I'm your friendly task management assistant. You can ask me to add, list, complete, delete, or update tasks. What would you like to do today?",
+                    "response": "Hi there! I'm your friendly task management assistant. You can ask me to add, list, complete, delete, or update tasks. What would you like to do today?",
                     "handled_locally": True
                 }
             elif 'how are you' in message_lower or 'how do you do' in message_lower:
                 return {
-                    "response": "I'm doing great, thank you for asking! 😊 I'm here to help you manage your tasks. Would you like to add, list, complete, delete, or update any tasks?",
+                    "response": "I'm doing great, thank you for asking! I'm here to help you manage your tasks. Would you like to add, list, complete, delete, or update any tasks?",
                     "handled_locally": True
                 }
             elif 'thank' in message_lower:
                 return {
-                    "response": "You're welcome! 😊 I'm happy to help. Is there anything else I can assist you with regarding your tasks?",
+                    "response": "You're welcome! I'm happy to help. Is there anything else I can assist you with regarding your tasks?",
                     "handled_locally": True
                 }
             elif any(bye_word in message_lower for bye_word in ['bye', 'goodbye', 'see you', 'farewell']):
                 return {
-                    "response": "Goodbye! 👋 Feel free to come back anytime you need help managing your tasks! Have a great day! 🌟",
+                    "response": "Goodbye! Feel free to come back anytime you need help managing your tasks! Have a great day!",
                     "handled_locally": True
                 }
             elif 'name' in message_lower and ('what' in message_lower or 'who' in message_lower):
                 return {
-                    "response": "I'm your friendly task management assistant! 🤖 I can help you add, list, complete, delete, or update tasks. How can I assist you today?",
+                    "response": "I'm your friendly task management assistant! I can help you add, list, complete, delete, or update tasks. How can I assist you today?",
                     "handled_locally": True
                 }
             elif 'help' in message_lower:
@@ -279,7 +279,7 @@ class TaskIntelligenceService:
                 sanitized_title = title.strip()
                 result = add_task(user_id=user_id, title=sanitized_title, description=description)
                 return {
-                    "response": f"✅ Great! I've added the task '{result['title']}' to your list! It's now ready to tackle. 💪",
+                    "response": f"Great! I've added the task '{result['title']}' to your list! It's now ready to tackle.",
                     "handled_locally": True,
                     "tool_call": {
                         "name": "add_task",
@@ -299,7 +299,7 @@ class TaskIntelligenceService:
                 if not tasks:
                     status_text = status if status != "all" else "current"
                     return {
-                        "response": f"You don't have any {status_text} tasks right now. Would you like to add some? ✨",
+                        "response": f"You don't have any {status_text} tasks right now. Would you like to add some?",
                         "handled_locally": True
                     }
 
@@ -310,22 +310,22 @@ class TaskIntelligenceService:
 
                     if pending_tasks and completed_tasks:
                         pending_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in pending_tasks])
-                        completed_list = "\n".join([f"  • #{task['id']}: {task['title']} ✅" for task in completed_tasks])
-                        response = f"📋 Here are your tasks:\n\nPending ({len(pending_tasks)}):\n{pending_list}"
+                        completed_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in completed_tasks])
+                        response = f"Here are your tasks:\n\nPending ({len(pending_tasks)}):\n{pending_list}"
                         if completed_tasks:
                             response += f"\n\nCompleted ({len(completed_tasks)}):\n{completed_list}"
                     elif pending_tasks:
                         task_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in pending_tasks])
-                        response = f"📋 Here are your {len(pending_tasks)} pending tasks:\n{task_list}"
+                        response = f"Here are your {len(pending_tasks)} pending tasks:\n{task_list}"
                     elif completed_tasks:
-                        task_list = "\n".join([f"  • #{task['id']}: {task['title']} ✅" for task in completed_tasks])
-                        response = f"🎉 Here are your {len(completed_tasks)} completed tasks:\n{task_list}"
+                        task_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in completed_tasks])
+                        response = f"Here are your {len(completed_tasks)} completed tasks:\n{task_list}"
                     else:
-                        response = f"📋 Here are your {len(tasks)} tasks:\n" + "\n".join([f"  • #{task['id']}: {task['title']}" for task in tasks])
+                        response = f"Here are your {len(tasks)} tasks:\n" + "\n".join([f"  • #{task['id']}: {task['title']}" for task in tasks])
                 else:
-                    task_list = "\n".join([f"  • #{task['id']}: {task['title']}" + (" ✅" if task['status'] == 'completed' else "") for task in tasks])
+                    task_list = "\n".join([f"  • #{task['id']}: {task['title']}" for task in tasks])
                     status_display = "pending" if status == "pending" else status
-                    response = f"📋 Here are your {len(tasks)} {status_display} tasks:\n{task_list}"
+                    response = f"Here are your {len(tasks)} {status_display} tasks:\n{task_list}"
 
                 return {
                     "response": response,
@@ -347,12 +347,12 @@ class TaskIntelligenceService:
                         task_title = title_match.group(2)
                         # We would need to implement a way to find task by title, but for now we'll ask for ID
                         return {
-                            "response": f"To complete '{task_title}', I need the task number. Could you please specify which task number corresponds to '{task_title}'? 🤔",
+                            "response": f"To complete '{task_title}', I need the task number. Could you please specify which task number corresponds to '{task_title}'?",
                             "handled_locally": True
                         }
 
                     return {
-                        "response": "Which task would you like to mark as complete? Please specify the task number (e.g., 'complete task #1'). 🎯",
+                        "response": "Which task would you like to mark as complete? Please specify the task number (e.g., 'complete task #1').",
                         "handled_locally": True
                     }
 
@@ -365,7 +365,7 @@ class TaskIntelligenceService:
 
                 result = complete_task(user_id=user_id, task_id=task_id)
                 return {
-                    "response": f"🎉 Excellent! I've marked task '#{result['id']}: {result['title']}' as completed! Great job! 💪",
+                    "response": f"Excellent! I've marked task '#{result['id']}: {result['title']}' as completed! Great job!",
                     "handled_locally": True,
                     "tool_call": {
                         "name": "complete_task",
@@ -381,25 +381,25 @@ class TaskIntelligenceService:
                     if title_match:
                         task_title = title_match.group(2)
                         return {
-                            "response": f"To delete '{task_title}', I need the task number. Could you please specify which task number corresponds to '{task_title}'? 🤔",
+                            "response": f"To delete '{task_title}', I need the task number. Could you please specify which task number corresponds to '{task_title}'?",
                             "handled_locally": True
                         }
 
                     return {
-                        "response": "Which task would you like to delete? Please specify the task number (e.g., 'delete task #1'). ❌",
+                        "response": "Which task would you like to delete? Please specify the task number (e.g., 'delete task #1').",
                         "handled_locally": True
                     }
 
                 # Validate that the task ID is positive
                 if task_id <= 0:
                     return {
-                        "response": "Task numbers must be positive. Please specify a valid task number. 📝",
+                        "response": "Task numbers must be positive. Please specify a valid task number.",
                         "handled_locally": True
                     }
 
                 result = delete_task(user_id=user_id, task_id=task_id)
                 return {
-                    "response": f"🗑️ Got it! I've deleted task '#{result['id']}: {result['title']}'. It's gone forever! 💨",
+                    "response": f"Got it! I've deleted task '#{result['id']}: {result['title']}'. It's gone forever!",
                     "handled_locally": True,
                     "tool_call": {
                         "name": "delete_task",
@@ -415,19 +415,19 @@ class TaskIntelligenceService:
                     if title_match:
                         task_title = title_match.group(2)
                         return {
-                            "response": f"To update '{task_title}', I need the task number. Could you please specify which task number corresponds to '{task_title}'? 🤔",
+                            "response": f"To update '{task_title}', I need the task number. Could you please specify which task number corresponds to '{task_title}'?",
                             "handled_locally": True
                         }
 
                     return {
-                        "response": "Which task would you like to update? Please specify the task number (e.g., 'update task #1'). 🛠️",
+                        "response": "Which task would you like to update? Please specify the task number (e.g., 'update task #1').",
                         "handled_locally": True
                     }
 
                 # Validate that the task ID is positive
                 if task_id <= 0:
                     return {
-                        "response": "Task numbers must be positive. Please specify a valid task number. 📝",
+                        "response": "Task numbers must be positive. Please specify a valid task number.",
                         "handled_locally": True
                     }
 
@@ -446,7 +446,7 @@ class TaskIntelligenceService:
 
                     result = update_task(user_id=user_id, task_id=task_id, title=new_title)
                     return {
-                        "response": f"✨ Perfect! I've updated task #{result['id']} to '{result['title']}'. Looks much better! 🎉",
+                        "response": f"Perfect! I've updated task #{result['id']} to '{result['title']}'. Looks much better!",
                         "handled_locally": True,
                         "tool_call": {
                             "name": "update_task",
@@ -455,30 +455,30 @@ class TaskIntelligenceService:
                     }
                 else:
                     return {
-                        "response": f"What would you like to update about task #{task_id}? Please specify the new title or description (e.g., 'update task #{task_id} to \"new title\"'). 🛠️",
+                        "response": f"What would you like to update about task #{task_id}? Please specify the new title or description (e.g., 'update task #{task_id} to \"new title\"').",
                         "handled_locally": True
                     }
         except ValidationError as e:
             return {
-                "response": f"I couldn't process your request: {str(e)}. Please check your input and try again. 🤔",
+                "response": f"I couldn't process your request: {str(e)}. Please check your input and try again.",
                 "handled_locally": True,
                 "error": str(e)
             }
         except TaskNotFoundError as e:
             return {
-                "response": f"I couldn't find that task. It might have been deleted or the task number might be incorrect. Please check the task number and try again. 🔍",
+                "response": f"I couldn't find that task. It might have been deleted or the task number might be incorrect. Please check the task number and try again.",
                 "handled_locally": True,
                 "error": str(e)
             }
         except AuthorizationError as e:
             return {
-                "response": f"You're not authorized to perform that action. This might be because the task belongs to another user. 🛡️",
+                "response": f"You're not authorized to perform that action. This might be because the task belongs to another user.",
                 "handled_locally": True,
                 "error": str(e)
             }
         except Exception as e:
             return {
-                "response": f"An unexpected error occurred while processing your request. Please try again. If the problem persists, contact support. 🛠️",
+                "response": f"An unexpected error occurred while processing your request. Please try again. If the problem persists, contact support.",
                 "handled_locally": True,
                 "error": str(e)
             }
