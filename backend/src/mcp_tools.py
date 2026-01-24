@@ -23,8 +23,17 @@ def _get_db_session():
     from src.core.config import settings
     from sqlmodel import create_engine
 
+    # Apply the same URL conversion logic as in get_engine() to handle async formats
+    db_url = settings.database_url
+    if db_url.startswith("postgresql+asyncpg://"):
+        # Convert asyncpg URL to regular PostgreSQL URL for sync operations
+        db_url = "postgresql://" + db_url[len("postgresql+asyncpg://"):]
+    elif db_url.startswith("postgresql+psycopg://"):
+        # Convert psycopg URL to regular PostgreSQL URL for sync operations
+        db_url = "postgresql://" + db_url[len("postgresql+psycopg://"):]
+
     # Use SQLModel Session with the proper engine directly
-    engine = create_engine(settings.database_url)
+    engine = create_engine(db_url)
     return Session(engine)
 
 
