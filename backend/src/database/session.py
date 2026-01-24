@@ -19,8 +19,17 @@ def get_engine():
     """Get database engine, creating it if it doesn't exist"""
     global _engine
     if _engine is None:
+        # Ensure we use the sync PostgreSQL driver by converting async URLs to sync
+        db_url = settings.database_url
+        if db_url.startswith("postgresql+asyncpg://"):
+            # Convert asyncpg URL to regular PostgreSQL URL for sync operations
+            db_url = "postgresql://" + db_url[len("postgresql+asyncpg://"):]  # Remove "postgresql+asyncpg://" and add "postgresql://"
+        elif db_url.startswith("postgresql+psycopg://"):
+            # Convert psycopg URL to regular PostgreSQL URL for sync operations
+            db_url = "postgresql://" + db_url[len("postgresql+psycopg://"):]  # Remove "postgresql+psycopg://" and add "postgresql://"
+
         _engine = create_engine(
-            settings.database_url,
+            db_url,
             pool_size=settings.db_pool_size,
             max_overflow=settings.db_pool_overflow,
             echo=settings.db_echo
