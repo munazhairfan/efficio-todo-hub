@@ -20,7 +20,7 @@ from utils.ambiguous_pattern_matcher import get_ambiguous_pattern_matcher
 from utils.vague_term_detector import get_vague_term_detector
 
 # Direct import for proper session handling
-from src.database.session import get_session
+from src.database.session import get_db as get_session
 
 from src.services.task_intelligence_service import task_intelligence_service
 from services.rate_limiter import rate_limiter
