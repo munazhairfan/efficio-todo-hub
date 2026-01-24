@@ -4,7 +4,7 @@ from typing import Optional
 
 class Settings(BaseSettings):
     """Application settings"""
-    database_url: str = "sqlite:///./todo_app.db"  # Default to SQLite for local development
+    database_url: str = "sqlite:///./todo_app.db"  # Default to SQLite for local development, but will be overridden by env var
     secret_key: str = "dev-secret-key-change-in-production"  # Default for development/testing
     openrouter_api_key: str = ""  # Optional - will be set via OPENROUTER_API_KEY environment variable if needed
     algorithm: str = "HS256"

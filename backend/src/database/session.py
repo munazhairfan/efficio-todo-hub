@@ -2,6 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from src.core.config import settings
+from sqlmodel import SQLModel
 from typing import Optional
 
 
@@ -24,6 +25,12 @@ def get_engine():
             max_overflow=settings.db_pool_overflow,
             echo=settings.db_echo
         )
+        # Import all models to ensure they're registered with SQLModel metadata
+        # This ensures tables are created when the engine is first created
+        from src.models import task  # noqa: F401
+        from src.models import user  # noqa: F401
+        # Create all tables - this will work for both new and existing databases
+        SQLModel.metadata.create_all(bind=_engine)
     return _engine
 
 
