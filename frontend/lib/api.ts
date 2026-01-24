@@ -87,9 +87,17 @@ class ApiClient {
     }
   }
 
-  // Helper method to get the auth token from cookies or localStorage
+  // Helper method to get the auth token from localStorage (primary) or cookies (fallback)
   private getAuthToken(): string | null {
-    // First try to get from document.cookie (browser)
+    // First try to get from localStorage (this is what auth system primarily uses)
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const token = window.localStorage.getItem('authToken');
+      if (token) {
+        return token;
+      }
+    }
+
+    // Fallback to cookies (secondary storage used by auth system)
     if (typeof document !== 'undefined') {
       const cookies = document.cookie.split(';');
       for (const cookie of cookies) {
@@ -100,16 +108,7 @@ class ApiClient {
       }
     }
 
-    // Fallback to localStorage for client-side storage
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const token = window.localStorage.getItem('authToken');
-      if (token) {
-        return token;
-      }
-    }
-
-    // For server-side rendering, we might need to get it differently
-    // But in client-side this should work
+    // Token not found in either location
     return null;
   }
 
