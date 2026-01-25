@@ -65,7 +65,7 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
 
     # Prepare the request payload
     payload = {
-        "model": "google/gemma-3-27b-it:free",  # Using the specified free Google Gemma model that works
+        "model": "openai/gpt-3.5-turbo",  # Using the model specified in the spec that works
         "messages": messages,
         "temperature": 0.7,  # Balanced between creativity and coherence
         "max_tokens": 1000,   # Reasonable limit for chat responses
