@@ -69,9 +69,12 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
         "messages": messages,
         "temperature": 0.7,  # Balanced between creativity and coherence
         "max_tokens": 1000,   # Reasonable limit for chat responses
-        "tools": tools if tools is not None else [],  # MCP tool schemas when provided
-        "tool_choice": "auto"  # Allow AI to decide when to use tools
     }
+
+    # Only include tools-related parameters if tools are provided
+    if tools is not None and len(tools) > 0:
+        payload["tools"] = tools
+        payload["tool_choice"] = "auto"  # Allow AI to decide when to use tools
 
     # Prepare headers
     headers = {
