@@ -29,8 +29,34 @@ def get_current_user(
 
     try:
         # Decode the JWT token
-        print(f"DEBUG: Attempting to decode JWT token, using secret_key: {'SET' if settings.secret_key else 'NOT SET'}, algorithm: {settings.algorithm}")
-        print(f"DEBUG: Raw token: {credentials.credentials[:20]}..." if credentials.credentials else "DEBUG: No credentials provided")
+        print(f"DEBUG: Attempting to decode JWT token")
+        print(f"DEBUG: Secret key (first 10 chars): {settings.secret_key[:10] if settings.secret_key else 'NOT SET'}")
+        print(f"DEBUG: Algorithm: {settings.algorithm}")
+        print(f"DEBUG: Raw token (first 20 chars): {credentials.credentials[:20] if credentials.credentials else 'NO TOKEN'}...")
+        print(f"DEBUG: Full token length: {len(credentials.credentials) if credentials.credentials else 0}")
+
+        # Let's also try to decode without verification to see the token contents
+        try:
+            # Decode header and payload without verification to inspect token
+            import base64
+            if credentials.credentials:
+                token_parts = credentials.credentials.split('.')
+                if len(token_parts) == 3:
+                    # Decode header
+                    header_part = token_parts[0]
+                    # Add padding if needed
+                    header_part += '=' * (4 - len(header_part) % 4)
+                    header_json = base64.b64decode(header_part).decode('utf-8')
+                    print(f"DEBUG: JWT Header: {header_json}")
+
+                    # Decode payload
+                    payload_part = token_parts[1]
+                    # Add padding if needed
+                    payload_part += '=' * (4 - len(payload_part) % 4)
+                    payload_json = base64.b64decode(payload_part).decode('utf-8')
+                    print(f"DEBUG: JWT Payload: {payload_json}")
+        except Exception as e:
+            print(f"DEBUG: Could not decode token header/payload for inspection: {e}")
 
         payload = jwt.decode(credentials.credentials, settings.secret_key, algorithms=[settings.algorithm])
         user_id: str = payload.get("sub")
@@ -56,10 +82,14 @@ def get_current_user(
         return None  # Return None instead of raising exception to allow fallback
     except jwt.JWTError as je:
         print(f"DEBUG: JWT error during decoding: {str(je)}")
+        print(f"DEBUG: JWT error type: {type(je)}")
         return None  # Return None instead of raising exception to allow fallback
     except Exception as e:
         # For any other error, return None to indicate unauthenticated state
         print(f"DEBUG: General error in get_current_user: {str(e)}")
+        print(f"DEBUG: General error type: {type(e)}")
+        import traceback
+        print(f"DEBUG: Full traceback: {traceback.format_exc()}")
         return None
 
 

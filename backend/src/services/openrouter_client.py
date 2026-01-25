@@ -83,6 +83,11 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
 
     try:
         # Make the API request using httpx
+        print(f"DEBUG: OpenRouter API request - URL: https://openrouter.ai/api/v1/chat/completions")
+        print(f"DEBUG: OpenRouter API request - Model: {payload.get('model', 'unknown')}")
+        print(f"DEBUG: OpenRouter API request - Headers: {{'Authorization': 'Bearer [REDACTED]', 'Content-Type': 'application/json', 'HTTP-Referer': 'efficio-todo-hub', 'X-Title': 'Efficio Todo Hub'}}")
+        print(f"DEBUG: OpenRouter API request - Payload (first 200 chars): {str(payload)[:200]}...")
+
         with httpx.Client(timeout=timeout) as client:
             response = client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
@@ -90,8 +95,15 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
                 headers=headers
             )
 
+            print(f"DEBUG: OpenRouter API response status: {response.status_code}")
+            print(f"DEBUG: OpenRouter API response headers: {dict(response.headers)}")
+
             # Check if the request was successful
-            response.raise_for_status()
+            if response.status_code == 401:
+                print(f"DEBUG: OpenRouter 401 Unauthorized - Response text: {response.text}")
+                response.raise_for_status()  # This will trigger the exception handling
+            else:
+                response.raise_for_status()
 
             # Parse the response
             data = response.json()
