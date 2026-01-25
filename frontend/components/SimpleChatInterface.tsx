@@ -146,13 +146,13 @@ export default function SimpleChatInterface() {
             infoResponse = `Welcome! Our app helps you manage your tasks and stay organized. You can interact with me to manage your personal task list. To access your tasks, please sign in to your account. In the meantime, I'm happy to answer any questions you have about how the app works!`;
           }
 
-          const assistantMessage: Message = {
+          const infoAssistantMessage: Message = {
             id: Date.now() + 1,
             type: 'assistant',
             content: infoResponse
           };
 
-          setMessages(prev => [...prev, assistantMessage]);
+          setMessages(prev => [...prev, infoAssistantMessage]);
           setIsLoading(false);
           return;
         } else {
@@ -183,42 +183,65 @@ export default function SimpleChatInterface() {
       // Ensure we have a proper user ID before making the API call
       let userIdToSend = 'guest_user';
 
-      if (user && user.id) {
-        // If user object is loaded with an ID, use it
-        userIdToSend = user.id.toString(); // Convert number to string as expected by backend
-      } else if (isAuthenticated) {
-        // If authenticated but user not loaded yet, try to get from storage
-        // First try to get the user from API if not loaded yet
-        if (!user && !authLoading) {
-          try {
-            // Attempt to get user data if we know the user is authenticated but data isn't loaded
-            const token = localStorage.getItem('authToken');
-            if (token) {
-              // Make a direct API call to get user info
-              const userResponse = await fetch('/api/users', {
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-                }
-              });
+      console.log('DEBUG: Auth state - isAuthenticated:', isAuthenticated, 'authLoading:', authLoading, 'user exists:', !!user, 'user.id:', user?.id);
 
-              if (userResponse.ok) {
-                const userData = await userResponse.json();
-                userIdToSend = userData.id?.toString() || localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
+      if (isAuthenticated && user && user.id) {
+        // Primary case: authenticated user with loaded user object
+        userIdToSend = user.id.toString(); // Convert number to string as expected by backend
+        console.log('DEBUG: Using user ID from loaded authenticated user object:', userIdToSend);
+      } else if (isAuthenticated && !authLoading) {
+        // Secondary case: authenticated but user data not loaded yet, try to get from API
+        try {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            // Make a direct API call to get user info
+            const userResponse = await fetch('/api/users/me', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json();
+              userIdToSend = userData.id?.toString() || userData.user?.id?.toString();
+              console.log('DEBUG: Got user ID from API call:', userIdToSend);
+            } else {
+              console.log('DEBUG: Failed to get user from API, using fallback');
+              // If API call fails, try to get from local storage
+              const storedUserId = localStorage.getItem('user_id') || localStorage.getItem('userId') || localStorage.getItem('auth_user_id');
+              if (storedUserId && storedUserId !== 'null' && storedUserId !== 'undefined' && storedUserId !== 'temp_user') {
+                userIdToSend = storedUserId;
+                console.log('DEBUG: Using user ID from localStorage:', userIdToSend);
               } else {
-                // If API call fails, try to get from local storage
-                userIdToSend = localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
+                // As a last resort, let the backend extract from auth header
+                userIdToSend = 'auth_extract'; // Special value to indicate backend should extract from auth
+                console.log('DEBUG: No user ID available, sending auth_extract to let backend handle auth extraction');
               }
             }
-          } catch (error) {
-            // If all attempts fail, try local storage fallbacks
-            userIdToSend = localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
-            console.warn('Could not fetch user data, using fallback ID:', userIdToSend);
+          } else {
+            console.log('DEBUG: No auth token found in localStorage');
           }
-        } else {
-          // User data is still loading, try storage
-          userIdToSend = localStorage.getItem('user_id') || localStorage.getItem('userId') || 'temp_user';
+        } catch (error) {
+          console.log('DEBUG: Error fetching user data:', error);
+          // If all attempts fail, try local storage fallbacks
+          const storedUserId = localStorage.getItem('user_id') || localStorage.getItem('userId') || localStorage.getItem('auth_user_id');
+          if (storedUserId && storedUserId !== 'null' && storedUserId !== 'undefined' && storedUserId !== 'temp_user') {
+            userIdToSend = storedUserId;
+            console.log('DEBUG: Using user ID from localStorage after error:', userIdToSend);
+          } else {
+            // Let backend handle auth extraction from header
+            userIdToSend = 'auth_extract';
+            console.log('DEBUG: Error occurred, sending auth_extract to let backend handle auth extraction');
+          }
         }
+      } else if (isAuthenticated) {
+        // Auth is still loading, send special indicator
+        userIdToSend = 'auth_extract'; // Tell backend to extract from auth header
+        console.log('DEBUG: Auth still loading, sending auth_extract to let backend handle auth extraction');
+      } else {
+        // User is not authenticated
+        console.log('DEBUG: User not authenticated, keeping as guest_user');
       }
       // If not authenticated, keep as 'guest_user'
 
