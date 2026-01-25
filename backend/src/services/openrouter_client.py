@@ -65,7 +65,7 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
 
     # Prepare the request payload
     payload = {
-        "model": "google/gemma-2-9b-it:free",  # Free Google Gemma model that works reliably
+        "model": "mistralai/mistral-7b-instruct:free",  # Free Mistral model that works reliably
         "messages": messages,
         "temperature": 0.7,  # Balanced between creativity and coherence
         "max_tokens": 1000,   # Reasonable limit for chat responses
