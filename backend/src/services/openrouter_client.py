@@ -65,7 +65,7 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
 
     # Prepare the request payload
     payload = {
-        "model": "openchat/openchat-7b:free",  # Using free OpenChat model (confirmed available on OpenRouter)
+        "model": "google/gemma-2-27b-it:free",  # Using free Google Gemma 2 27b model (confirmed available on OpenRouter)
         "messages": messages,
         "temperature": 0.7,  # Balanced between creativity and coherence
         "max_tokens": 1000,   # Reasonable limit for chat responses
