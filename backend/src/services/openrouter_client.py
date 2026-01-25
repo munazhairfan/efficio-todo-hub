@@ -65,7 +65,7 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
 
     # Basic payload with only essential fields
     payload = {
-        "model": "google/gemma-2-9b-it:free",
+        "model": "deepseek/deepseek-r1-0528:free",
         "messages": messages
     }
 
