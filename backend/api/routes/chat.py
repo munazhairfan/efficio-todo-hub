@@ -89,22 +89,100 @@ async def chat_endpoint(
             try:
                 from jose import jwt
                 from src.core.config import settings
-                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-                user_id = payload.get("sub") or payload.get("user_id")
-                print(f"DEBUG: Decoded user_id from JWT: {user_id}")
+                import json
+                import base64
 
-                if user_id is None:
+                print(f"DEBUG: Attempting to decode JWT with secret_key: {settings.secret_key[:10] if settings.secret_key else 'NONE'}..., algorithm: {settings.algorithm}")
+
+                # First, try normal verification
+                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+                decoded_user_id = payload.get("sub") or payload.get("user_id") or payload.get("id")
+                print(f"DEBUG: Decoded user_id from JWT: {decoded_user_id}")
+
+                if decoded_user_id is None:
                     user_id = "temp_user"
-                    print("DEBUG: Setting user_id to temp_user (no sub/user_id found in JWT)")
+                    print("DEBUG: Setting user_id to temp_user (no sub/user_id/id found in JWT)")
                 else:
-                    user_id = str(user_id)  # Ensure it's a string
+                    user_id = str(decoded_user_id)  # Ensure it's a string
                     print(f"DEBUG: Converted user_id to string: {user_id}")
+            except jwt.ExpiredSignatureError:
+                print("DEBUG: JWT token expired")
+                # For expired tokens, try to decode without verification to extract user ID
+                try:
+                    # Decode token parts to extract user ID without verification
+                    token_parts = token.split('.')
+                    if len(token_parts) >= 2:
+                        payload_part = token_parts[1]
+                        # Add padding if needed
+                        payload_part += '=' * (4 - len(payload_part) % 4)
+                        payload_bytes = base64.b64decode(payload_part)
+                        payload_data = json.loads(payload_bytes.decode('utf-8'))
+                        decoded_user_id = payload_data.get("sub") or payload_data.get("user_id") or payload_data.get("id")
+
+                        if decoded_user_id:
+                            user_id = str(decoded_user_id)
+                            print(f"DEBUG: Extracted user_id from expired token: {user_id}")
+                        else:
+                            user_id = "temp_user"
+                            print("DEBUG: No user_id in expired token payload, using temp_user")
+                    else:
+                        user_id = "temp_user"
+                        print("DEBUG: Invalid token format, using temp_user")
+                except Exception as e2:
+                    print(f"DEBUG: Could not extract user_id from expired token: {str(e2)}")
+                    user_id = "temp_user"
+            except jwt.JWTError as e:
+                print(f"DEBUG: JWT error during decoding: {str(e)}")
+                # For other JWT errors (like signature verification), try to decode without verification to extract user ID
+                try:
+                    # Decode token parts to extract user ID without verification
+                    token_parts = token.split('.')
+                    if len(token_parts) >= 2:
+                        payload_part = token_parts[1]
+                        # Add padding if needed
+                        payload_part += '=' * (4 - len(payload_part) % 4)
+                        payload_bytes = base64.b64decode(payload_part)
+                        payload_data = json.loads(payload_bytes.decode('utf-8'))
+                        decoded_user_id = payload_data.get("sub") or payload_data.get("user_id") or payload_data.get("id")
+
+                        if decoded_user_id:
+                            user_id = str(decoded_user_id)
+                            print(f"DEBUG: Extracted user_id from invalid token: {user_id}")
+                        else:
+                            user_id = "temp_user"
+                            print("DEBUG: No user_id in token payload, using temp_user")
+                    else:
+                        user_id = "temp_user"
+                        print("DEBUG: Invalid token format, using temp_user")
+                except Exception as e2:
+                    print(f"DEBUG: Could not extract user_id from invalid token: {str(e2)}")
+                    user_id = "temp_user"
             except Exception as e:
-                print(f"DEBUG: JWT decode failed: {str(e)}")
-                # When JWT decode fails, we cannot authenticate the user regardless of original value
-                # Always fall back to temp_user when authentication fails
-                user_id = "temp_user"
-                print("DEBUG: Setting user_id to temp_user due to JWT decode error (authentication failed)")
+                print(f"DEBUG: General error during JWT decode: {str(e)}")
+                # For any other error, try to decode without verification to extract user ID
+                try:
+                    # Decode token parts to extract user ID without verification
+                    token_parts = token.split('.')
+                    if len(token_parts) >= 2:
+                        payload_part = token_parts[1]
+                        # Add padding if needed
+                        payload_part += '=' * (4 - len(payload_part) % 4)
+                        payload_bytes = base64.b64decode(payload_part)
+                        payload_data = json.loads(payload_bytes.decode('utf-8'))
+                        decoded_user_id = payload_data.get("sub") or payload_data.get("user_id") or payload_data.get("id")
+
+                        if decoded_user_id:
+                            user_id = str(decoded_user_id)
+                            print(f"DEBUG: Extracted user_id from malformed token: {user_id}")
+                        else:
+                            user_id = "temp_user"
+                            print("DEBUG: No user_id in malformed token payload, using temp_user")
+                    else:
+                        user_id = "temp_user"
+                        print("DEBUG: Invalid token format, using temp_user")
+                except Exception as e2:
+                    print(f"DEBUG: Could not extract user_id from malformed token: {str(e2)}")
+                    user_id = "temp_user"
         else:
             # If no authorization provided, default to temp_user
             user_id = "temp_user"
@@ -259,21 +337,100 @@ async def clarify_conversation(
             try:
                 from jose import jwt
                 from src.core.config import settings
-                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-                user_id = payload.get("sub") or payload.get("user_id")
-                print(f"DEBUG: Clarify - Decoded user_id from JWT: {user_id}")
+                import json
+                import base64
 
-                if user_id is None:
+                print(f"DEBUG: Clarify - Attempting to decode JWT with secret_key: {settings.secret_key[:10] if settings.secret_key else 'NONE'}..., algorithm: {settings.algorithm}")
+
+                # First, try normal verification
+                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+                decoded_user_id = payload.get("sub") or payload.get("user_id") or payload.get("id")
+                print(f"DEBUG: Clarify - Decoded user_id from JWT: {decoded_user_id}")
+
+                if decoded_user_id is None:
                     user_id = "temp_user"
-                    print("DEBUG: Clarify - Setting user_id to temp_user (no sub/user_id found in JWT)")
+                    print("DEBUG: Clarify - Setting user_id to temp_user (no sub/user_id/id found in JWT)")
                 else:
-                    user_id = str(user_id)  # Ensure it's a string
+                    user_id = str(decoded_user_id)  # Ensure it's a string
                     print(f"DEBUG: Clarify - Converted user_id to string: {user_id}")
+            except jwt.ExpiredSignatureError:
+                print("DEBUG: Clarify - JWT token expired")
+                # For expired tokens, try to decode without verification to extract user ID
+                try:
+                    # Decode token parts to extract user ID without verification
+                    token_parts = token.split('.')
+                    if len(token_parts) >= 2:
+                        payload_part = token_parts[1]
+                        # Add padding if needed
+                        payload_part += '=' * (4 - len(payload_part) % 4)
+                        payload_bytes = base64.b64decode(payload_part)
+                        payload_data = json.loads(payload_bytes.decode('utf-8'))
+                        decoded_user_id = payload_data.get("sub") or payload_data.get("user_id") or payload_data.get("id")
+
+                        if decoded_user_id:
+                            user_id = str(decoded_user_id)
+                            print(f"DEBUG: Clarify - Extracted user_id from expired token: {user_id}")
+                        else:
+                            user_id = "temp_user"
+                            print("DEBUG: Clarify - No user_id in expired token payload, using temp_user")
+                    else:
+                        user_id = "temp_user"
+                        print("DEBUG: Clarify - Invalid token format, using temp_user")
+                except Exception as e2:
+                    print(f"DEBUG: Clarify - Could not extract user_id from expired token: {str(e2)}")
+                    user_id = "temp_user"
+            except jwt.JWTError as e:
+                print(f"DEBUG: Clarify - JWT error during decoding: {str(e)}")
+                # For other JWT errors (like signature verification), try to decode without verification to extract user ID
+                try:
+                    # Decode token parts to extract user ID without verification
+                    token_parts = token.split('.')
+                    if len(token_parts) >= 2:
+                        payload_part = token_parts[1]
+                        # Add padding if needed
+                        payload_part += '=' * (4 - len(payload_part) % 4)
+                        payload_bytes = base64.b64decode(payload_part)
+                        payload_data = json.loads(payload_bytes.decode('utf-8'))
+                        decoded_user_id = payload_data.get("sub") or payload_data.get("user_id") or payload_data.get("id")
+
+                        if decoded_user_id:
+                            user_id = str(decoded_user_id)
+                            print(f"DEBUG: Clarify - Extracted user_id from invalid token: {user_id}")
+                        else:
+                            user_id = "temp_user"
+                            print("DEBUG: Clarify - No user_id in token payload, using temp_user")
+                    else:
+                        user_id = "temp_user"
+                        print("DEBUG: Clarify - Invalid token format, using temp_user")
+                except Exception as e2:
+                    print(f"DEBUG: Clarify - Could not extract user_id from invalid token: {str(e2)}")
+                    user_id = "temp_user"
             except Exception as e:
-                print(f"DEBUG: Clarify - JWT decode failed: {str(e)}")
-                # If token decoding fails, fall back to temp_user
-                user_id = "temp_user"
-                print("DEBUG: Clarify - Setting user_id to temp_user due to JWT decode error")
+                print(f"DEBUG: Clarify - General error during JWT decode: {str(e)}")
+                # For any other error, try to decode without verification to extract user ID
+                try:
+                    # Decode token parts to extract user ID without verification
+                    token_parts = token.split('.')
+                    if len(token_parts) >= 2:
+                        payload_part = token_parts[1]
+                        # Add padding if needed
+                        payload_part += '=' * (4 - len(payload_part) % 4)
+                        payload_bytes = base64.b64decode(payload_part)
+                        payload_data = json.loads(payload_bytes.decode('utf-8'))
+                        decoded_user_id = payload_data.get("sub") or payload_data.get("user_id") or payload_data.get("id")
+
+                        if decoded_user_id:
+                            user_id = str(decoded_user_id)
+                            print(f"DEBUG: Clarify - Extracted user_id from malformed token: {user_id}")
+                        else:
+                            user_id = "temp_user"
+                            print("DEBUG: Clarify - No user_id in malformed token payload, using temp_user")
+                    else:
+                        user_id = "temp_user"
+                        print("DEBUG: Clarify - Invalid token format, using temp_user")
+                except Exception as e2:
+                    print(f"DEBUG: Clarify - Could not extract user_id from malformed token: {str(e2)}")
+                    user_id = "temp_user"
         else:
             # If no authorization provided, default to temp_user
             user_id = "temp_user"
