@@ -63,32 +63,33 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
         logger.error("OpenRouter API key is not configured in settings or environment")
         raise ValueError("OpenRouter API key is required")
 
-    # Prepare the request payload
+    # Prepare the request payload - using minimal required fields to avoid 400 errors
     payload = {
         "model": "google/gemma-2-2b-it:free",  # Using free Google Gemma 2 model (confirmed available on OpenRouter)
         "messages": messages,
-        "temperature": 0.7,  # Balanced between creativity and coherence
-        "max_tokens": 1000,   # Reasonable limit for chat responses
     }
 
-    # Only include tools-related parameters if tools are provided
+    # Only include optional parameters if they have valid values
     if tools is not None and len(tools) > 0:
         payload["tools"] = tools
         payload["tool_choice"] = "auto"  # Allow AI to decide when to use tools
+    else:
+        # For general conversation, use simpler parameters to avoid 400 errors
+        payload["temperature"] = 0.7
+        payload["max_tokens"] = 1000
 
     # Prepare headers
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "efficio-todo-hub",
-        "X-Title": "Efficio Todo Hub"
+        "X-Title": "Efficio Todo Hub"  # Required by OpenRouter to track usage
     }
 
     try:
         # Make the API request using httpx
         print(f"DEBUG: OpenRouter API request - URL: https://openrouter.ai/api/v1/chat/completions")
         print(f"DEBUG: OpenRouter API request - Model: {payload.get('model', 'unknown')}")
-        print(f"DEBUG: OpenRouter API request - Headers: {{'Authorization': 'Bearer [REDACTED]', 'Content-Type': 'application/json', 'HTTP-Referer': 'efficio-todo-hub', 'X-Title': 'Efficio Todo Hub'}}")
+        print(f"DEBUG: OpenRouter API request - Headers: {{'Authorization': 'Bearer [REDACTED]', 'Content-Type': 'application/json', 'X-Title': 'Efficio Todo Hub'}}")
         print(f"DEBUG: OpenRouter API request - Payload (first 200 chars): {str(payload)[:200]}...")
 
         with httpx.Client(timeout=timeout) as client:
