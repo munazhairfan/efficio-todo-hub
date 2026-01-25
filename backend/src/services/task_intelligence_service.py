@@ -180,8 +180,21 @@ class TaskIntelligenceService:
         """
         Extract task title and description from message
         """
-        # Remove common phrases that indicate task creation
-        clean_message = re.sub(r'^(add|create|make|new)\s+(a\s+)?(task\s+to|task|to)\s*', '', message, flags=re.IGNORECASE)
+        # Remove introductory phrases and common task creation phrases
+        # Handle messages like "hey add a task to cook food" by removing the task creation part
+        # First, try to match the pattern "add a task to X" anywhere in the message
+        task_pattern = r'(add|create|make|new)\s+(a\s+)?(task\s+to|task|to)\s+'
+        matches = re.finditer(task_pattern, message, re.IGNORECASE)
+
+        clean_message = message
+        for match in matches:
+            # Take everything after the task creation phrase
+            clean_message = message[match.end():].strip()
+            break  # Take the first match
+
+        # If the above didn't work, try the original approach
+        if clean_message == message:
+            clean_message = re.sub(r'^(add|create|make|new)\s+(a\s+)?(task\s+to|task|to)\s*', '', message, flags=re.IGNORECASE)
 
         # If the message still contains common task-related phrases, extract the core task
         if re.search(r'(buy|get|do|complete|finish|start|stop|go|visit|call|send|write|read)', clean_message, re.IGNORECASE):

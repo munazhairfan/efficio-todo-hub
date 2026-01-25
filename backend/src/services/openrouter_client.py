@@ -47,12 +47,21 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
     Raises:
         Exception: If the API call fails or returns an invalid response
     """
-    # Load the API key from environment variables
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    # Load the API key from settings (with fallback to environment variable)
+    print(f"DEBUG: OPENROUTER_API_KEY from os.getenv: {'SET' if os.getenv('OPENROUTER_API_KEY') else 'NOT SET'}")
+    print(f"DEBUG: OPENROUTER_API_KEY length: {len(os.getenv('OPENROUTER_API_KEY')) if os.getenv('OPENROUTER_API_KEY') else 0}")
+
+    # Try multiple possible configuration paths for the API key
+    api_key = getattr(settings, 'openrouter_api_key', None) or os.getenv("OPENROUTER_API_KEY")
+
+    print(f"DEBUG: Final API key from settings: {'SET' if api_key else 'NOT SET'}")
+    if api_key:
+        print(f"DEBUG: API key length: {len(api_key)}")
+        print(f"DEBUG: API key first 10 chars: {api_key[:10]}...")
 
     if not api_key:
-        logger.error("OPENROUTER_API_KEY environment variable is not set")
-        raise ValueError("OPENROUTER_API_KEY environment variable is required")
+        logger.error("OpenRouter API key is not configured in settings or environment")
+        raise ValueError("OpenRouter API key is required")
 
     # Prepare the request payload
     payload = {
