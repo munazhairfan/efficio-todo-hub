@@ -101,9 +101,10 @@ async def chat_endpoint(
                     print(f"DEBUG: Converted user_id to string: {user_id}")
             except Exception as e:
                 print(f"DEBUG: JWT decode failed: {str(e)}")
-                # If token decoding fails, fall back to temp_user
+                # When JWT decode fails, we cannot authenticate the user regardless of original value
+                # Always fall back to temp_user when authentication fails
                 user_id = "temp_user"
-                print("DEBUG: Setting user_id to temp_user due to JWT decode error")
+                print("DEBUG: Setting user_id to temp_user due to JWT decode error (authentication failed)")
         else:
             # If no authorization provided, default to temp_user
             user_id = "temp_user"
