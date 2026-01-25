@@ -65,7 +65,7 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
 
     # Prepare the request payload
     payload = {
-        "model": "openai/gpt-3.5-turbo",  # Using a stable, chat-capable model with tool calling support
+        "model": "google/gemini-2.0-flash-exp",  # Using free Google Gemini model
         "messages": messages,
         "temperature": 0.7,  # Balanced between creativity and coherence
         "max_tokens": 1000,   # Reasonable limit for chat responses
