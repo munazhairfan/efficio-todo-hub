@@ -63,34 +63,31 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
         logger.error("OpenRouter API key is not configured in settings or environment")
         raise ValueError("OpenRouter API key is required")
 
-    # Prepare the request payload - using minimal required fields to avoid 400 errors
+    # Basic payload with only essential fields
     payload = {
-        "model": "google/gemma-2-2b-it:free",  # Using free Google Gemma 2 model (confirmed available on OpenRouter)
-        "messages": messages,
+        "model": "google/gemma-2-2b-it:free",
+        "messages": messages
     }
 
-    # Only include optional parameters if they have valid values
+    # Add optional fields only if needed
     if tools is not None and len(tools) > 0:
         payload["tools"] = tools
-        payload["tool_choice"] = "auto"  # Allow AI to decide when to use tools
+        payload["tool_choice"] = "auto"
     else:
-        # For general conversation, use simpler parameters to avoid 400 errors
+        # Add basic parameters for general conversation
         payload["temperature"] = 0.7
         payload["max_tokens"] = 1000
 
-    # Prepare headers
+    # Essential headers
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "X-Title": "Efficio Todo Hub"  # Required by OpenRouter to track usage
+        "X-Title": "Efficio Todo Hub"
     }
 
     try:
-        # Make the API request using httpx
-        print(f"DEBUG: OpenRouter API request - URL: https://openrouter.ai/api/v1/chat/completions")
-        print(f"DEBUG: OpenRouter API request - Model: {payload.get('model', 'unknown')}")
-        print(f"DEBUG: OpenRouter API request - Headers: {{'Authorization': 'Bearer [REDACTED]', 'Content-Type': 'application/json', 'X-Title': 'Efficio Todo Hub'}}")
-        print(f"DEBUG: OpenRouter API request - Payload (first 200 chars): {str(payload)[:200]}...")
+        print(f"DEBUG: OpenRouter API request - Model: {payload['model']}")
+        print(f"DEBUG: OpenRouter API request - Message count: {len(messages)}")
 
         with httpx.Client(timeout=timeout) as client:
             response = client.post(
@@ -100,109 +97,20 @@ def call_openrouter(messages: List[Dict[str, str]], tools: Optional[List[Dict[st
             )
 
             print(f"DEBUG: OpenRouter API response status: {response.status_code}")
-            print(f"DEBUG: OpenRouter API response headers: {dict(response.headers)}")
 
-            # Check if the request was successful
-            if response.status_code == 401:
-                print(f"DEBUG: OpenRouter 401 Unauthorized - Response text: {response.text}")
-                response.raise_for_status()  # This will trigger the exception handling
-            else:
-                response.raise_for_status()
+            if response.status_code != 200:
+                print(f"DEBUG: OpenRouter error response: {response.text}")
+                return "I'm having trouble responding right now. Please try again."
 
-            # Parse the response
             data = response.json()
 
-            # Check if the response contains tool calls
             if "choices" in data and len(data["choices"]) > 0:
-                choice = data["choices"][0]
-
-                # Check if the AI wants to call a tool
-                if "tool_calls" in choice["message"]:
-                    # Import the tools here to avoid circular imports
-                    from src.mcp_tools import add_task, list_tasks, complete_task, delete_task, update_task
-
-                    # Process each tool call
-                    tool_call_results = []
-                    for tool_call in choice["message"]["tool_calls"]:
-                        function_name = tool_call["function"]["name"]
-                        import json
-                        function_args = json.loads(tool_call["function"]["arguments"])  # Safely parse the arguments
-
-                        try:
-                            # Execute the appropriate tool function
-                            if function_name == "add_task":
-                                result = add_task(**function_args)
-                            elif function_name == "list_tasks":
-                                result = list_tasks(**function_args)
-                            elif function_name == "complete_task":
-                                result = complete_task(**function_args)
-                            elif function_name == "delete_task":
-                                result = delete_task(**function_args)
-                            elif function_name == "update_task":
-                                result = update_task(**function_args)
-                            else:
-                                result = {"error": f"Unknown function: {function_name}"}
-
-                            tool_call_results.append({
-                                "tool_call_id": tool_call["id"],
-                                "role": "tool",
-                                "name": function_name,
-                                "content": str(result)
-                            })
-                        except Exception as e:
-                            tool_call_results.append({
-                                "tool_call_id": tool_call["id"],
-                                "role": "tool",
-                                "name": function_name,
-                                "content": f"Error executing tool: {str(e)}"
-                            })
-
-                    # Send the tool results back to the model for a final response
-                    # First add the assistant message that contained the tool calls
-                    assistant_message_with_tool_calls = {
-                        "role": "assistant",
-                        "content": choice["message"].get("content"),
-                        "tool_calls": choice["message"]["tool_calls"]
-                    }
-                    updated_messages = messages + [assistant_message_with_tool_calls] + tool_call_results
-
-                    # Make a second API call with the tool results
-                    payload["messages"] = updated_messages
-                    second_response = client.post(
-                        "https://openrouter.ai/api/v1/chat/completions",
-                        json=payload,
-                        headers=headers
-                    )
-
-                    second_response.raise_for_status()
-                    second_data = second_response.json()
-
-                    if "choices" in second_data and len(second_data["choices"]) > 0:
-                        content = second_data["choices"][0]["message"]["content"]
-                        return content.strip() if content else ""
-                    else:
-                        logger.error(f"No choices found in OpenRouter response: {second_data}")
-                        return "I'm having trouble responding right now. Please try again."
-                else:
-                    # No tool calls, return the content directly
-                    content = choice["message"]["content"]
-                    return content.strip() if content else ""
+                content = data["choices"][0]["message"]["content"]
+                return content.strip() if content else ""
             else:
                 logger.error(f"No choices found in OpenRouter response: {data}")
                 return "I'm having trouble responding right now. Please try again."
 
-    except httpx.TimeoutException:
-        logger.error("OpenRouter API request timed out")
-        return "I'm having trouble responding right now. Please try again."
-
-    except httpx.RequestError as e:
-        logger.error(f"OpenRouter API request error: {str(e)}")
-        return "I'm having trouble responding right now. Please try again."
-
-    except KeyError as e:
-        logger.error(f"Unexpected response format from OpenRouter: {str(e)}")
-        return "I'm having trouble responding right now. Please try again."
-
     except Exception as e:
-        logger.error(f"Unexpected error during OpenRouter API call: {str(e)}")
+        logger.error(f"OpenRouter API call failed: {str(e)}")
         return "I'm having trouble responding right now. Please try again."
