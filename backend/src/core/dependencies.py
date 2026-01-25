@@ -29,10 +29,16 @@ def get_current_user(
 
     try:
         # Decode the JWT token
+        print(f"DEBUG: Attempting to decode JWT token, using secret_key: {'SET' if settings.secret_key else 'NOT SET'}, algorithm: {settings.algorithm}")
+        print(f"DEBUG: Raw token: {credentials.credentials[:20]}..." if credentials.credentials else "DEBUG: No credentials provided")
+
         payload = jwt.decode(credentials.credentials, settings.secret_key, algorithms=[settings.algorithm])
         user_id: str = payload.get("sub")
 
+        print(f"DEBUG: JWT decode successful, user_id: {user_id}")
+
         if user_id is None:
+            print("DEBUG: JWT payload has no 'sub' field, returning None")
             return None  # Return None instead of raising exception to allow fallback
 
         # Get user from database
@@ -46,11 +52,14 @@ def get_current_user(
 
         return user
     except jwt.ExpiredSignatureError:
+        print(f"DEBUG: JWT token expired: {str(jwt.ExpiredSignatureError)}")
         return None  # Return None instead of raising exception to allow fallback
-    except jwt.JWTError:
+    except jwt.JWTError as je:
+        print(f"DEBUG: JWT error during decoding: {str(je)}")
         return None  # Return None instead of raising exception to allow fallback
     except Exception as e:
         # For any other error, return None to indicate unauthenticated state
+        print(f"DEBUG: General error in get_current_user: {str(e)}")
         return None
 
 
