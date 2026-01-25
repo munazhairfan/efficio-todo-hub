@@ -61,7 +61,9 @@ async def chat_endpoint(
     user_id = context.get("user_id")
     print(f"DEBUG: Initial user_id from context: {user_id}")
 
-    if not user_id:
+    # If user_id is not found in context OR if it's the special 'auth_extract' value,
+    # try to get user ID from authorization header using existing auth system
+    if not user_id or user_id == "auth_extract":
         # Try to get user ID from authorization header using existing auth system
         # This would require the request to have proper authorization header
         # For now, we'll check if there's an authorization header and extract user info
@@ -225,7 +227,9 @@ async def clarify_conversation(
     user_id = context.get("user_id")
     print(f"DEBUG: Clarify - Initial user_id from context: {user_id}")
 
-    if not user_id:
+    # If user_id is not found in context OR if it's the special 'auth_extract' value,
+    # try to get user ID from authorization header using existing auth system
+    if not user_id or user_id == "auth_extract":
         # Try to get user ID from authorization header using existing auth system
         # Import the existing auth dependency
         from src.core.dependencies import get_current_user
@@ -234,8 +238,8 @@ async def clarify_conversation(
 
         # In the actual request processing, we need to extract the user from the authorization header
         # Since we don't have direct access to the header here, we'll need to modify the approach
-        # Let's look for authorization in the context or data
-        auth_header = context.get("authorization") or data.get("authorization")
+        # Let's look for authorization in the context, data, or parameter
+        auth_header = context.get("authorization") or data.get("authorization") or authorization
 
         print(f"DEBUG: Clarify - Auth header found: {bool(auth_header)}")
 
