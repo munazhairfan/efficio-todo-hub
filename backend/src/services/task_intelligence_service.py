@@ -309,6 +309,7 @@ class TaskIntelligenceService:
                     status = "completed"
 
                 tasks = list_tasks(user_id=user_id, status=status)
+                tasks = sorted(tasks, key=lambda t: t["id"])
                 if not tasks:
                     status_text = status if status != "all" else "current"
                     return {
@@ -318,9 +319,13 @@ class TaskIntelligenceService:
 
                 # Format response with better formatting
                 if status == "all":
-                    pending_tasks = [task for task in tasks if task['status'] == 'pending']
-                    completed_tasks = [task for task in tasks if task['status'] == 'completed']
-
+                    pending_tasks = sorted(
+                        [task for task in tasks if task['status'] == 'pending'],
+                        key=lambda t: t["id"])
+                    completed_tasks = sorted(
+                        [task for task in tasks if task['status'] == 'completed'],
+                        key=lambda t: t["id"]
+                        )
                     if pending_tasks and completed_tasks:
                         pending_list = "\n".join([f"  - #{task['id']}: {task['title']}" for task in pending_tasks])
                         completed_list = "\n".join([f"  - #{task['id']}: {task['title']}" for task in completed_tasks])
